@@ -27,5 +27,5 @@ export default async function Home() {
     .eq("id", user.id)
     .maybeSingle();
 
-  return <DashboardShell profile={{ name: profile?.full_name || user.email || "Operator", role: profile?.role || "operator", shift: profile?.operator_shift || "day" }} />;
+  return <DashboardShell profile={{ name: profile?.full_name || user.email || "Operator", role: profile?.role || "operator", shift: profile?.operator_shift || "day", email: user.email || "" }} />;
 }

@@ -13,7 +13,9 @@ function clean(value: unknown): string {
 }
 function key(value: unknown) { return clean(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
 function asNumber(value: unknown): number | null {
-  const parsed = Number(clean(value).replace(/,/g, ""));
+  const normalized = clean(value).replace(/,/g, "");
+  if (!normalized) return null;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
 }
 function meterStatus(value: unknown): string | null {
@@ -109,7 +111,7 @@ export async function POST(request: Request) {
       if (error) throw error;
       return NextResponse.json({ imported: validRows.length, result: data });
     }
-    return NextResponse.json({ fileName: file.name, rowCount: validRows.length, errors, rows: validRows.slice(0, 8) });
+    return NextResponse.json({ fileName: file.name, rowCount: validRows.length, errors, sample: validRows.slice(0, 8) });
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : "Import failed.";
     return NextResponse.json({ error: message }, { status: 500 });

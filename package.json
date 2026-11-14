@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:status": "supabase migration list --remote",
+    "db:baseline": "supabase migration repair --status applied 20261114000000 --remote",
+    "db:push": "supabase db push --remote"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -23,6 +26,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "supabase": "^3.1.0",
     "typescript": "^5"
   }
 }
