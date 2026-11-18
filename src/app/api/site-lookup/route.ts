@@ -16,6 +16,10 @@ export async function GET(request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
 
+    const { data: profile, error: profileError } = await supabase.from("profiles").select("is_active").eq("id", user.id).maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile?.is_active) return NextResponse.json({ error: "This account is inactive." }, { status: 403 });
+
     const { data: site, error: siteError } = await supabase
       .from("site_master")
       .select("*")

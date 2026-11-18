@@ -1,5 +1,6 @@
 import { SignInForm } from "@/components/sign-in-form";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { InactiveAccount } from "@/components/inactive-account";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
@@ -21,11 +22,16 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return <SignInForm />;
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("full_name, role, operator_shift")
+    .select("full_name, role, operator_shift, username, is_active")
     .eq("id", user.id)
     .maybeSingle();
 
-  return <DashboardShell profile={{ name: profile?.full_name || user.email || "Operator", role: profile?.role || "operator", shift: profile?.operator_shift || "day", email: user.email || "" }} />;
+  if (profile?.is_active === false) return <InactiveAccount />;
+  if (profileError || !profile) {
+    return <main className="login-wrap"><section className="login-panel"><h1>Account unavailable</h1><p className="muted">Your user profile could not be loaded. Contact the super admin before trying again.</p></section></main>;
+  }
+
+  return <DashboardShell profile={{ name: profile.full_name || user.email || user.phone || "Operator", role: profile.role, shift: profile.operator_shift, email: profile.username || user.email || user.phone || "" }} />;
 }

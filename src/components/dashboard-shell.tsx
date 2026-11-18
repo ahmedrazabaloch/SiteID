@@ -3,6 +3,7 @@
 import { FormEvent, ReactNode, useState } from "react";
 import { AdminSection } from "@/components/admin-section";
 import { createClient } from "@/lib/supabase/client";
+import { friendlyError, ToastProvider, useToast } from "@/components/toast-provider";
 
 type Profile = { name: string; role: string; shift: string; email: string };
 type SiteResult = {
@@ -13,17 +14,24 @@ type SiteResult = {
 };
 type Section = "lookup" | "master" | "daily" | "vehicles" | "roster" | "profile";
 
-const navItems: { id: Section; label: string; icon: IconName; admin?: boolean }[] = [
+const navItems: { id: Section; label: string; icon: IconName; admin?: boolean; superAdminOnly?: boolean }[] = [
   { id: "lookup", label: "Complaint lookup", icon: "search" },
   { id: "master", label: "Master sites", icon: "site", admin: true },
   { id: "daily", label: "Daily fueling", icon: "fuel", admin: true },
   { id: "vehicles", label: "Route vehicles", icon: "vehicle", admin: true },
-  { id: "roster", label: "Staff & shifts", icon: "people", admin: true },
+  { id: "roster", label: "Users & access", icon: "people", admin: true, superAdminOnly: true },
   { id: "profile", label: "My profile", icon: "user" },
 ];
 
 export function DashboardShell({ profile }: { profile: Profile }) {
-  const isAdmin = profile.role === "admin";
+  return <ToastProvider><DashboardContent profile={profile} /></ToastProvider>;
+}
+
+function DashboardContent({ profile }: { profile: Profile }) {
+  const notify = useToast();
+  const isAdmin = profile.role === "admin" || profile.role === "super_admin";
+  const isSuperAdmin = profile.role === "super_admin";
+  const visibleNav = navItems.filter((item) => item.id !== "profile" && (!item.admin || isAdmin) && (!item.superAdminOnly || isSuperAdmin));
   const [displayName, setDisplayName] = useState(profile.name);
   const [section, setSection] = useState<Section>("lookup");
   const [siteId, setSiteId] = useState("");
@@ -31,24 +39,22 @@ export function DashboardShell({ profile }: { profile: Profile }) {
   const [targetShift, setTargetShift] = useState<"day" | "night">("day");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [result, setResult] = useState<SiteResult | null>(null);
-  const [notice, setNotice] = useState("");
-  const [noticeIsError, setNoticeIsError] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function lookup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setNotice("");
-    setNoticeIsError(false);
     setResult(null);
     setBusy(true);
     try {
       const response = await fetch(`/api/site-lookup?siteId=${encodeURIComponent(siteId.trim())}`);
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "Site lookup failed.");
+      const body = await response.json().catch(() => null) as ({ error?: string } & SiteResult) | null;
+      if (response.status === 404) { notify(body?.error || `Site ID ${siteId.trim()} was not found in Master Sites.`, "warning"); return; }
+      if (!response.ok) throw new Error(body?.error || "We could not look up this site. Please try again.");
+      if (!body) throw new Error("The lookup returned an empty response. Please try again.");
       setResult(body as SiteResult);
+      notify("Site details loaded.", "success");
     } catch (cause) {
-      setNotice(cause instanceof Error ? cause.message : "Site lookup failed.");
-      setNoticeIsError(true);
+      notify(friendlyError(cause, "We could not look up this site. Please try again."), "error");
     } finally {
       setBusy(false);
     }
@@ -58,11 +64,16 @@ export function DashboardShell({ profile }: { profile: Profile }) {
   const current = result?.current ?? {};
   const route = String(site[targetShift === "day" ? "day_route" : "night_route"] ?? "Route not set");
   const team = String(site[targetShift === "day" ? "day_team" : "night_team"] ?? "Team not set");
-  const activeVehicle = result?.vehicles?.find((vehicle) => vehicle.route === route && vehicle.field_shift === targetShift);
+  const siteArea = normalizeArea(site.site_area);
+  const activeVehicle = result?.vehicles?.find((vehicle) => {
+    if (vehicle.field_shift !== targetShift) return false;
+    const assignedAreas = String(vehicle.route ?? "").split("&").map(normalizeArea);
+    return normalizeArea(vehicle.route) === normalizeArea(route) || assignedAreas.includes(siteArea);
+  });
   const message = result
     ? [
         `Fuel Request — Site ${String(site.site_id ?? siteId)}`,
-        `Requested fuel: ${litres || "[L]"} L`,
+        `Requested fuel: ${litres.trim() ? `${litres.trim()} L` : "[L]"}`,
         `FormulaOne team: ${team}`,
         `Route: ${route}`,
         `Day team: ${String(site.day_team ?? "Not set")}`,
@@ -74,18 +85,19 @@ export function DashboardShell({ profile }: { profile: Profile }) {
   async function copyMessage() {
     try {
       await navigator.clipboard.writeText(message);
-      setNotice("Request copied. Paste it into the FormulaOne WhatsApp group.");
-      setNoticeIsError(false);
+      notify("Request copied. Paste it into the FormulaOne WhatsApp group.", "success");
     } catch {
-      setNotice("Clipboard access was blocked. Select and copy the request text manually.");
-      setNoticeIsError(true);
+      notify("Clipboard access was blocked. Select and copy the request text manually.", "warning");
     }
   }
 
   async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.reload();
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      window.location.reload();
+    } catch (cause) { notify(friendlyError(cause, "Could not sign out. Please try again."), "error"); }
   }
 
   return (
@@ -94,7 +106,7 @@ export function DashboardShell({ profile }: { profile: Profile }) {
         <aside className="sidebar">
           <div className="sidebar-brand"><span className="drop-mark"><DropIcon /></span><span><strong>Fuel Ops</strong><small>Tower Operations</small></span></div>
           <nav className="sidebar-nav" aria-label="Workspace">
-            {navItems.filter((item) => item.id !== "profile" && (!item.admin || isAdmin)).map((item) => <button key={item.id} className={section === item.id ? "nav-item active" : "nav-item"} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
+            {visibleNav.map((item) => <button key={item.id} className={section === item.id ? "nav-item active" : "nav-item"} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
           </nav>
         </aside>
         <main className="content">
@@ -103,16 +115,15 @@ export function DashboardShell({ profile }: { profile: Profile }) {
             <button className="mobile-menu-button" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}><AppIcon name={mobileMenuOpen ? "close" : "menu"} /></button>
             <div className="top-meta"><button className="account-trigger" onClick={() => setSection("profile")} aria-label="Open profile"><span className="avatar-mark">{displayName.trim().slice(0, 1).toUpperCase() || "U"}</span></button></div>
           </header>
-          {mobileMenuOpen && <nav className="mobile-nav" aria-label="Workspace">{navItems.filter((item) => item.id !== "profile" && (!item.admin || isAdmin)).map((item) => <button key={item.id} className={section === item.id ? "mobile-active" : ""} onClick={() => { setSection(item.id); setMobileMenuOpen(false); }}><AppIcon name={item.icon} />{item.label}</button>)}<button onClick={() => { setSection("profile"); setMobileMenuOpen(false); }}><AppIcon name="user" />My profile</button></nav>}
+          {mobileMenuOpen && <nav className="mobile-nav" aria-label="Workspace">{visibleNav.map((item) => <button key={item.id} className={section === item.id ? "mobile-active" : ""} onClick={() => { setSection(item.id); setMobileMenuOpen(false); }}><AppIcon name={item.icon} />{item.label}</button>)}<button onClick={() => { setSection("profile"); setMobileMenuOpen(false); }}><AppIcon name="user" />My profile</button></nav>}
           <div className="workspace-content">{section === "profile" ? <ProfilePanel profile={{ ...profile, name: displayName }} onNameSaved={setDisplayName} onSignOut={signOut} /> : section === "lookup" ? (
             <>
               <div className="page-heading"><div><h1>Complaint lookup</h1><p className="muted">Find a site and prepare a fuel request for your team.</p></div></div>
               <form className="lookup-form" onSubmit={lookup}>
                 <label>Site ID<input value={siteId} onChange={(event) => setSiteId(event.target.value)} inputMode="numeric" placeholder="e.g. 112" required /></label>
-                <label>Requested fuel (L)<input value={litres} onChange={(event) => setLitres(event.target.value)} inputMode="decimal" placeholder="e.g. 120" required /></label>
+                <label>Requested fuel (L)<input value={litres} onChange={(event) => setLitres(event.target.value)} inputMode="decimal" placeholder="e.g. 120" /></label>
                 <button className="primary-button" disabled={busy}>{busy ? "Finding site…" : <><AppIcon name="search" />Find site</>}</button>
               </form>
-              {notice && <p className={noticeIsError ? "notice notice-error" : "notice"} role={noticeIsError ? "alert" : "status"}>{notice}</p>}
               {result && (
                 <section className="result-panel">
                   <div className="result-grid">
@@ -154,45 +165,46 @@ export function DashboardShell({ profile }: { profile: Profile }) {
 }
 
 function ProfilePanel({ profile, onNameSaved, onSignOut }: { profile: Profile; onNameSaved: (name: string) => void; onSignOut: () => void }) {
+  const notify = useToast();
   const [name, setName] = useState(profile.name);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [notice, setNotice] = useState("");
-  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function saveName(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setNotice(""); setError("");
+    event.preventDefault();
+    if (!name.trim()) { notify("Enter a display name before saving.", "warning"); return; }
+    setBusy(true);
     try {
       const supabase = createClient();
       const { error: rpcError } = await supabase.rpc("update_my_profile", { p_full_name: name.trim() });
       if (rpcError) throw rpcError;
       onNameSaved(name.trim());
-      setNotice("Your name has been updated.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save your name."); }
+      notify("Your name has been updated.", "success");
+    } catch (cause) { notify(friendlyError(cause, "Could not save your name. Please try again."), "error"); }
     finally { setBusy(false); }
   }
 
   async function savePassword(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setNotice(""); setError("");
-    if (password.length < 8) { setError("Use a password with at least 8 characters."); setBusy(false); return; }
-    if (password !== confirmPassword) { setError("The passwords do not match."); setBusy(false); return; }
+    event.preventDefault();
+    if (password.length < 8) { notify("Use a password with at least 8 characters.", "warning"); return; }
+    if (password !== confirmPassword) { notify("The passwords do not match.", "warning"); return; }
+    setBusy(true);
     try {
       const supabase = createClient();
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
-      setPassword(""); setConfirmPassword(""); setNotice("Your password has been updated.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not update your password."); }
+      setPassword(""); setConfirmPassword(""); notify("Your password has been updated.", "success");
+    } catch (cause) { notify(friendlyError(cause, "Could not update your password. Please try again."), "error"); }
     finally { setBusy(false); }
   }
 
   return <section className="profile-page">
-    <div className="profile-hero"><span className="avatar-large">{profile.name.trim().slice(0, 1).toUpperCase() || "U"}</span><div><h1>My profile</h1><p>{profile.email} <span className="role-chip">{profile.role}</span></p></div><button className="quiet-button profile-signout" onClick={onSignOut}>Sign out</button></div>
+    <div className="profile-hero"><span className="avatar-large">{profile.name.trim().slice(0, 1).toUpperCase() || "U"}</span><div><h1>My profile</h1><p>Login ID: {profile.email} <span className="role-chip">{profile.role.replaceAll("_", " ")}</span></p></div><button className="quiet-button profile-signout" onClick={onSignOut}>Sign out</button></div>
     <div className="profile-cards">
       <form className="profile-card" onSubmit={saveName}><div><h2>Profile details</h2><p className="muted">Your name appears in the app header and staff list.</p></div><label>Display name<input value={name} onChange={(event) => setName(event.target.value)} required maxLength={80} /></label><button className="primary-button" disabled={busy || !name.trim()}>{busy ? "Saving…" : "Save name"}</button></form>
       <form className="profile-card" onSubmit={savePassword}><div><h2>Change password</h2><p className="muted">Use at least 8 characters for your new password.</p></div><label>New password<input type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} /></label><label>Confirm new password<input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} /></label><button className="primary-button" disabled={busy}>{busy ? "Updating…" : "Update password"}</button></form>
     </div>
-    {notice && <p className="notice" role="status">{notice}</p>}{error && <p className="error-text profile-error" role="alert">{error}</p>}
   </section>;
 }
 
@@ -206,6 +218,11 @@ function formatValue(value: unknown, suffix = "") {
 }
 function contactValue(name: unknown, phone: unknown) {
   return [name, phone].filter(Boolean).join(" / ") || "Not provided";
+}
+
+function normalizeArea(value: unknown) {
+  const normalized = String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return normalized === "northn" ? "northnazimabad" : normalized;
 }
 
 function meterLabel(value: unknown) {
