@@ -12,6 +12,7 @@ function clean(value: unknown): string {
   return value === null || value === undefined ? "" : String(value).trim();
 }
 function key(value: unknown) { return clean(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+function isBlank(value: unknown) { const normalized = clean(value).toLowerCase(); return !normalized || normalized === "-" || normalized === "n/a"; }
 function asNumber(value: unknown): number | null {
   const normalized = clean(value).replace(/,/g, "");
   if (!normalized) return null;
@@ -36,6 +37,23 @@ function asDate(value: unknown): string | null {
   return text && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : null;
 }
 function firstIndex(headers: string[], choices: string[]) { return headers.findIndex((header) => choices.includes(header)); }
+const requiredColumns = [
+  ["site id", "site code", "siteid"],
+  ["fueling date", "date"],
+  ["available fuel", "fuel available", "fuel available before l", "fuel available before", "previous stock"],
+  ["fuel poured", "fuel added", "fuel added l", "quantity filled"],
+  ["current reading", "current dg reading", "present reading"],
+];
+
+function findHeaderRow(sheet: ExcelJS.Worksheet) {
+  const scanLimit = Math.min(sheet.rowCount, 20);
+  for (let rowNumber = 1; rowNumber <= scanLimit; rowNumber++) {
+    const values = sheet.getRow(rowNumber).values as unknown[];
+    const headers = values.slice(1).map(key);
+    if (requiredColumns.every((aliases) => firstIndex(headers, aliases) >= 0)) return { rowNumber, headers };
+  }
+  return null;
+}
 
 export async function POST(request: Request) {
   try {
@@ -55,18 +73,19 @@ export async function POST(request: Request) {
 
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(Buffer.from(await file.arrayBuffer()) as unknown as Parameters<typeof workbook.xlsx.load>[0]);
-    const sheet = workbook.getWorksheet("Daily Update") ?? workbook.getWorksheet("Daily-Reports") ?? workbook.worksheets[0];
+    const sheet = workbook.getWorksheet("Daily Update") ?? workbook.getWorksheet("Daily-Reports") ?? workbook.getWorksheet("Daily Reports") ?? workbook.getWorksheet("Entery") ?? workbook.getWorksheet("Entry") ?? workbook.worksheets[0];
     if (!sheet || sheet.rowCount < 2) return NextResponse.json({ error: "The workbook has no daily rows." }, { status: 400 });
 
-    const headerValues = sheet.getRow(1).values as unknown[];
-    const headers = headerValues.slice(1).map(key);
-    const idCol = firstIndex(headers, ["site id", "site code", "siteid"]);
-    const dateCol = firstIndex(headers, ["fueling date", "date"]);
-    const availableCol = firstIndex(headers, ["available fuel", "fuel available", "fuel available before l", "fuel available before", "previous stock"]);
-    const pouredCol = firstIndex(headers, ["fuel poured", "fuel added", "fuel added l", "quantity filled"]);
-    const readingCol = firstIndex(headers, ["current reading", "current dg reading", "present reading"]);
+    const header = findHeaderRow(sheet);
+    if (!header) return NextResponse.json({ error: "Could not find a header row in the first 20 rows. Required columns: Site ID, Date, Available Fuel, Fuel Added, and Current Reading." }, { status: 400 });
+    const { rowNumber: headerRowNumber, headers } = header;
+    const idCol = firstIndex(headers, requiredColumns[0]);
+    const dateCol = firstIndex(headers, requiredColumns[1]);
+    const availableCol = firstIndex(headers, requiredColumns[2]);
+    const pouredCol = firstIndex(headers, requiredColumns[3]);
+    const readingCol = firstIndex(headers, requiredColumns[4]);
     const previousReadingCol = firstIndex(headers, ["previous reading", "last reading"]);
-    const previousTotalCol = firstIndex(headers, ["total maintained", "total fuel"]);
+    const previousTotalCol = firstIndex(headers, ["total maintained", "total fuel", "maintain"]);
     const meterStatusCol = firstIndex(headers, ["dg meter status", "meter status"]);
     const needed = [idCol, dateCol, availableCol, pouredCol, readingCol];
     if (needed.some((index) => index < 0)) {
@@ -78,16 +97,22 @@ export async function POST(request: Request) {
     const invalidRows: { row: number; siteId: string; fuelingDate: string | null; issue: string }[] = [];
     const errors: { row: number; siteId: string; issue: string }[] = [];
     const warnings: { row: number; siteId: string; issue: string }[] = [];
-    for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
+    for (let rowNumber = headerRowNumber + 1; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
       const siteId = clean(row.getCell(idCol + 1).value);
       if (!siteId) continue;
       const fuelingDate = asDate(row.getCell(dateCol + 1).value);
-      const availableFuel = asNumber(row.getCell(availableCol + 1).value);
-      const fuelPoured = asNumber(row.getCell(pouredCol + 1).value);
+      const availableRaw = row.getCell(availableCol + 1).value;
+      const pouredRaw = row.getCell(pouredCol + 1).value;
+      const availableFuel = asNumber(availableRaw);
+      const fuelPoured = asNumber(pouredRaw);
       const currentReading = asNumber(row.getCell(readingCol + 1).value);
       const previousReading = previousReadingCol < 0 ? null : asNumber(row.getCell(previousReadingCol + 1).value);
       const dgMeterStatus = meterStatusCol < 0 ? null : meterStatus(row.getCell(meterStatusCol + 1).value);
+      if (isBlank(availableRaw) && isBlank(pouredRaw)) {
+        warnings.push({ row: rowNumber, siteId, issue: "No fuel amounts recorded; row skipped" });
+        continue;
+      }
       if (!fuelingDate || availableFuel === null || fuelPoured === null || availableFuel < 0 || fuelPoured < 0) {
         invalidRows.push({ row: rowNumber, siteId, fuelingDate, issue: "Missing/invalid date or non-negative fuel amount" });
         continue;
