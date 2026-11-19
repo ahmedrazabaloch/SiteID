@@ -34,8 +34,16 @@ body { font-family: var(--font-roboto), sans-serif; font-size: 14px; -webkit-fon
 .detail-row .info-icon { display: grid; width: 26px; height: 26px; place-items: center; color: var(--emerald); }
 .detail-row .info-label { color: #506b63; font-size: 10px; font-weight: 700; }
 .detail-row .info-value { color: var(--ink); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+.contact-detail-grid { display: grid; gap: 0 12px; border-bottom: 1px solid var(--line-2); }
+.contact-grid-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.contact-grid-two { grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 0; }
+.contact-detail-grid .detail-row.info-row { min-width: 0; grid-template-columns: 25px minmax(0, 1fr); gap: 7px; min-height: 0; padding: 12px 0; border: 0; }
+.contact-detail-grid .info-icon { width: 23px; height: 23px; }
+.contact-detail-grid .info-label { line-height: 1.3; }
+.contact-detail-grid .info-value { font-size: 11px; }
 .fuel-card-body { padding: 13px 20px 18px; }
 .last-fueling .reading-row { min-height: 39px; padding: 8px 2px; }
+.last-fueling .data-value { align-items: center; }
 .last-fueling .data-label { color: #24373e; font-size: 12px; font-weight: 600; }
 .last-fueling .data-value strong { font-size: 12px; }
 .last-fueling .average-value { margin: 3px -7px 0; padding-inline: 9px; border: 0; background: #eef9f4; }
@@ -184,6 +192,7 @@ body { font-family: var(--font-roboto), sans-serif; font-size: 14px; -webkit-fon
   .toast-viewport { top: 12px; right: 12px; bottom: auto; width: min(390px, calc(100vw - 24px)); }
   .lookup-grid { grid-template-columns: 1fr; }
   .profile-layout { grid-template-columns: 1fr; }
+  .contact-grid-three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .topbar { padding-inline: 14px; }
@@ -222,4 +231,5 @@ body { font-family: var(--font-roboto), sans-serif; font-size: 14px; -webkit-fon
   .profile-layout { grid-template-columns: minmax(0, 1fr); }
   .credentials-card { align-items: flex-start; flex-wrap: wrap; }
   .site-id-badge, .fuel-date-badge { min-height: 29px; padding: 6px 9px; font-size: 11px; }
+  .contact-grid-three, .contact-grid-two { grid-template-columns: minmax(0, 1fr); }
 }

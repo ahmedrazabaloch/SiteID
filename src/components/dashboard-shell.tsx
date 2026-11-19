@@ -65,11 +65,11 @@ function DashboardContent({ profile }: { profile: Profile }) {
   const f1Zone = normalizeArea(site.f1_zone);
   function assignedVehicle(shift: "day" | "night") {
     const savedRoute = String(site[shift === "day" ? "day_route" : "night_route"] ?? "");
+    const zoneAliases = f1Zone === "northkarachi" && shift === "day" ? ["northnazimabad"] : [f1Zone];
     return result?.vehicles?.find((vehicle) => {
       if (vehicle.field_shift !== shift) return false;
       const assignedAreas = String(vehicle.route ?? "").split("&").map(normalizeArea);
-      if (f1Zone === "northkarachi") return shift === "day" && assignedAreas.includes("northnazimabad");
-      return (f1Zone && assignedAreas.includes(f1Zone)) || normalizeArea(vehicle.route) === normalizeArea(savedRoute) || assignedAreas.includes(siteArea);
+      return assignedAreas.some((area) => zoneAliases.includes(area)) || normalizeArea(vehicle.route) === normalizeArea(savedRoute) || assignedAreas.includes(siteArea);
     });
   }
   const dayVehicle = assignedVehicle("day");
@@ -84,9 +84,12 @@ function DashboardContent({ profile }: { profile: Profile }) {
   const teamFor = (shift: "day" | "night", vehicle: Record<string, unknown> | undefined) =>
     String(site[shift === "day" ? "day_team" : "night_team"] || vehicle?.team || vehicle?.route || "Not assigned");
   const route = routeFor(targetShift, activeVehicle);
-  const crewLabel = (vehicle: Record<string, unknown> | undefined, shift: "day" | "night") => vehicle
-    ? String(vehicle.vehicle_number ?? "Vehicle") + " · Driver: " + String(vehicle.driver || "Not set") + " · Supervisor: " + String(vehicle.fueler_supervisor || "Not set")
-    : shift === "night" && f1Zone === "northkarachi" ? "No Night vehicle assigned" : "Not assigned";
+  const crewLabel = (vehicle: Record<string, unknown> | undefined, shift: "day" | "night") => {
+    const savedTeam = String(site[shift === "day" ? "day_team" : "night_team"] ?? "").trim();
+    if (!vehicle) return savedTeam ? `Team: ${savedTeam} · Driver: Not assigned · Supervisor: Not assigned` : shift === "night" && f1Zone === "northkarachi" ? "No Night vehicle assigned" : "Not assigned";
+    const team = String(vehicle.team || vehicle.route || savedTeam).trim();
+    return [team ? `Team: ${team}` : "", `Driver: ${String(vehicle.driver || "Not set")}`, `Supervisor: ${String(vehicle.fueler_supervisor || "Not set")}`].filter(Boolean).join(" · ");
+  };
   const dayTeam = teamFor("day", dayVehicle);
   const nightTeam = teamFor("night", nightVehicle);
   const message = result
@@ -152,13 +155,15 @@ function DashboardContent({ profile }: { profile: Profile }) {
                       <DetailRow icon="route" label="F1 zone" value={String(site.f1_zone ?? "Not set")} />
                       <DetailRow icon="vehicle" label="Day vehicle crew" value={crewLabel(dayVehicle, "day")} />
                       <DetailRow icon="vehicle" label="Night vehicle crew" value={crewLabel(nightVehicle, "night")} />
-                      <DetailRow icon="route" label="Routing details" value={"Day · " + routeFor("day", dayVehicle) + "  /  Night · " + routeFor("night", nightVehicle)} />
-                      <DetailRow icon="people" label="FormulaOne teams" value={"Day · " + dayTeam + "  /  Night · " + nightTeam} />
-                      <DetailRow icon="user" label="Cluster Owner" value={contactValue(site.cluster_owner_name, site.cluster_owner_phone)} />
-                      <DetailRow icon="user" label="Night On-Caller" value={contactValue(site.night_on_caller_name, site.night_on_caller_phone)} />
-                      <DetailRow icon="people" label="I-Engineering lead" value={contactValue(site.ie_lead_name, site.ie_lead_phone)} />
+                      <div className="contact-detail-grid contact-grid-three">
+                        <DetailRow icon="user" label="Cluster Owner" value={contactValue(site.cluster_owner_name, site.cluster_owner_phone)} />
+                        <DetailRow icon="user" label="Night On-Caller" value={contactValue(site.night_on_caller_name, site.night_on_caller_phone)} />
+                        <DetailRow icon="people" label="I-Engineering lead" value={contactValue(site.ie_lead_name, site.ie_lead_phone)} />
+                      </div>
+                      <div className="contact-detail-grid contact-grid-two">
                       <DetailRow icon="people" label="Zong lead" value={contactValue(site.zong_lead_name, site.zong_lead_phone)} />
                       <DetailRow icon="people" label="Security SO" value={contactValue(site.security_so_name, site.security_so_phone)} />
+                      </div>
                     </div></section>
                     <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="fuel" />Last fueling</div><div className="card-subtitle">Most recent recorded generator fueling</div></div><span className="pill pill-gray fuel-date-badge">{formatFuelingDate(current.fueling_date)}</span></div><div className="last-fueling fuel-card-body">
                       <Value label="Fueling date" value={formatFuelingDate(current.fueling_date)} />
