@@ -72,6 +72,13 @@ function DashboardContent({ profile }: { profile: Profile }) {
       const northNazimabadAssignment = shiftVehicles.find((vehicle) => String(vehicle.route ?? "").split("&").map(normalizeArea).includes("northnazimabad"));
       if (northNazimabadAssignment) return northNazimabadAssignment;
     }
+    if (f1Zone === "northkarachi" && shift === "night") {
+      const northNazimabadAndGulshanAssignment = shiftVehicles.find((vehicle) => {
+        const areas = String(vehicle.route ?? "").split("&").map(normalizeArea);
+        return areas.includes("northnazimabad") && areas.includes("gulshan");
+      });
+      if (northNazimabadAndGulshanAssignment) return northNazimabadAndGulshanAssignment;
+    }
     return shiftVehicles.find((vehicle) => {
       const assignedAreas = String(vehicle.route ?? "").split("&").map(normalizeArea);
       return (f1Zone && assignedAreas.includes(f1Zone)) || normalizeArea(vehicle.route) === normalizeArea(savedRoute) || assignedAreas.includes(siteArea);
