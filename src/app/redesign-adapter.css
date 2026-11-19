@@ -45,6 +45,10 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .contact-detail-grid .info-icon { width: 23px; height: 23px; }
 .contact-detail-grid .info-label { line-height: 1.3; }
 .contact-detail-grid .info-value { font-size: 11px; }
+.site-additional-notes { display: grid; grid-template-columns: 25px minmax(0, 1fr); align-items: start; gap: 7px; padding: 12px 10px 4px; border-top: 1px solid var(--line-2); }
+.site-additional-notes .info-icon { width: 23px; height: 23px; }
+.site-additional-notes .info-label { display: block; margin-bottom: 4px; color: #506b63; font-size: 10px; font-weight: 700; line-height: 1.3; }
+.site-additional-notes .info-value { margin: 0; color: var(--ink); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-wrap; }
 .crew-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid var(--line-2); }
 .crew-detail-grid .detail-row.info-row { min-width: 0; grid-template-columns: 25px minmax(0, 1fr); gap: 7px; min-height: 0; padding: 12px 10px; border: 0; }
 .crew-detail-grid .detail-row.info-row:not(:last-child) { border-right: 1px solid var(--line-2); }
@@ -243,6 +247,7 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
   .credentials-card { align-items: flex-start; flex-wrap: wrap; }
   .site-id-badge, .fuel-date-badge { min-height: 29px; padding: 6px 9px; font-size: 11px; }
   .contact-grid-three, .contact-grid-two { grid-template-columns: minmax(0, 1fr); }
+  .site-additional-notes { padding-inline: 0; }
   .contact-detail-grid .detail-row.info-row { padding-inline: 0; }
   .contact-detail-grid .detail-row.info-row:not(:last-child) { border-right: 0; border-bottom: 1px solid var(--line-2); }
   .crew-detail-grid { grid-template-columns: minmax(0, 1fr); }

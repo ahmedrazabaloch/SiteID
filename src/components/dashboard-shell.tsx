@@ -171,6 +171,7 @@ function DashboardContent({ profile }: { profile: Profile }) {
                       <DetailRow icon="people" label="Zong lead" value={contactValue(site.zong_lead_name, site.zong_lead_phone)} />
                       <DetailRow icon="people" label="Security SO" value={contactValue(site.security_so_name, site.security_so_phone)} />
                       </div>
+                      <div className="site-additional-notes"><span className="info-icon"><AppIcon name="message" /></span><div><span className="info-label">Additional Notes</span><p className="info-value">{String(site.other_notes ?? "").trim() || "No additional notes provided."}</p></div></div>
                     </div></section>
                     <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="fuel" />Last fueling</div><div className="card-subtitle">Most recent recorded generator fueling</div></div><span className="pill pill-gray fuel-date-badge">{formatFuelingDate(current.fueling_date)}</span></div><div className="last-fueling fuel-card-body">
                       <Value label="Fueling date" value={formatFuelingDate(current.fueling_date)} />
