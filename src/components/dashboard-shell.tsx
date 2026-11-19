@@ -37,7 +37,6 @@ function DashboardContent({ profile }: { profile: Profile }) {
   const [siteId, setSiteId] = useState("");
   const [litres, setLitres] = useState("");
   const [targetShift, setTargetShift] = useState<"day" | "night">("day");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [result, setResult] = useState<SiteResult | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -121,33 +120,35 @@ function DashboardContent({ profile }: { profile: Profile }) {
   }
 
   return (
-    <div className="app-frame">
-      <div className="layout">
-        <aside className="sidebar">
-          <div className="sidebar-brand"><span className="drop-mark"><DropIcon /></span><span><strong>Fuel Ops</strong><small>Tower Operations</small></span></div>
-          <nav className="sidebar-nav" aria-label="Workspace">
-            {visibleNav.map((item) => <button key={item.id} className={section === item.id ? "nav-item active" : "nav-item"} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
-          </nav>
-        </aside>
-        <main className="content">
-          <header className="workspace-bar">
-            <div className="mobile-brand"><span className="drop-mark"><DropIcon /></span><span><strong>Fuel Ops</strong><small>Tower Operations</small></span></div>
-            <button className="mobile-menu-button" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen} aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}><AppIcon name={mobileMenuOpen ? "close" : "menu"} /></button>
-            <div className="top-meta"><button className="account-trigger" onClick={() => setSection("profile")} aria-label="Open profile"><span className="avatar-mark">{displayName.trim().slice(0, 1).toUpperCase() || "U"}</span></button></div>
-          </header>
-          {mobileMenuOpen && <nav className="mobile-nav" aria-label="Workspace">{visibleNav.map((item) => <button key={item.id} className={section === item.id ? "mobile-active" : ""} onClick={() => { setSection(item.id); setMobileMenuOpen(false); }}><AppIcon name={item.icon} />{item.label}</button>)}<button onClick={() => { setSection("profile"); setMobileMenuOpen(false); }}><AppIcon name="user" />My profile</button></nav>}
-          <div className="workspace-content">{section === "profile" ? <ProfilePanel profile={{ ...profile, name: displayName }} onNameSaved={setDisplayName} onSignOut={signOut} /> : section === "lookup" ? (
+    <div className="shell app-shell">
+      <aside className="sidebar">
+        <div className="brand"><span className="brand-mark"><DropIcon /></span><span><strong className="brand-name">Fuel Ops</strong><small className="brand-sub">Tower Operations</small></span></div>
+        <div className="nav-caption">Operations</div>
+        <nav className="nav" aria-label="Workspace">
+          {visibleNav.map((item) => <button key={item.id} className={section === item.id ? "nav-link active" : "nav-link"} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
+        </nav>
+        <div className="sidebar-spacer" />
+        <div className="sidebar-note"><strong>Karachi tower operations</strong><span>Site data, fuel records and field-team assignments in one workspace.</span></div>
+        <button className="sidebar-profile" onClick={() => setSection("profile")}><span className="avatar">{displayName.trim().slice(0, 1).toUpperCase() || "U"}</span><span><span className="profile-name">{displayName}</span><span className="profile-role">{profile.role.replaceAll("_", " ")}</span></span><AppIcon name="chevron" /></button>
+      </aside>
+      <main className="main">
+        <header className="topbar">
+          <div className="crumbs"><span>Fuel Ops</span><span className="crumb-dot" /><strong>{sectionLabel(section)}</strong></div>
+          <div className="top-actions"><div className="workspace-label"><span />Internal operations</div><button className="account-trigger" onClick={() => setSection("profile")}><span className="avatar">{displayName.trim().slice(0, 1).toUpperCase() || "U"}</span><span className="account-name">{displayName}</span><AppIcon name="chevron" /></button></div>
+        </header>
+        <div className="content">{section === "profile" ? <ProfilePanel profile={{ ...profile, name: displayName }} onNameSaved={setDisplayName} onSignOut={signOut} /> : section === "lookup" ? (
             <>
-              <div className="page-heading"><div><h1>Complaint lookup</h1><p className="muted">Find a site and prepare a fuel request for your team.</p></div></div>
-              <form className="lookup-form" onSubmit={lookup}>
+              <div className="page-heading"><div className="heading-copy"><div className="eyebrow">Site support</div><h1>Complaint lookup</h1><p>Find a site and prepare a fuel request for your team.</p></div></div>
+              <div className="card search-card"><form className="lookup-form search-grid" onSubmit={lookup}>
                 <label>Site ID<input value={siteId} onChange={(event) => setSiteId(event.target.value)} inputMode="numeric" placeholder="e.g. 112" required /></label>
                 <label>Requested fuel (L)<input value={litres} onChange={(event) => setLitres(event.target.value)} inputMode="decimal" placeholder="e.g. 120" /></label>
-                <button className="primary-button" disabled={busy}>{busy ? "Finding site…" : <><AppIcon name="search" />Find site</>}</button>
-              </form>
+                <button className="btn btn-primary" disabled={busy}>{busy ? "Finding site…" : <><AppIcon name="search" />Find site</>}</button>
+              </form><p className="search-helper">A Site ID is required. Requested fuel can be left blank.</p></div>
               {result && (
                 <section className="result-panel">
-                  <div className="result-grid">
-                    <section className="data-section"><h3 className="section-title"><AppIcon name="site" />Site details · {String(site.site_id ?? "")}</h3><div className="site-detail-list">
+                  <div className="lookup-result-head"><div className="result-site"><span className="result-icon"><AppIcon name="site" /></span><div><strong>Site {String(site.site_id ?? "")}</strong><span>{String(site.site_area ?? site.address ?? "Site record")}</span></div></div><span className="pill pill-green">Site found</span></div>
+                  <div className="lookup-grid">
+                    <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="site" />Site details</div><div className="card-subtitle">Location, field crews and client contacts</div></div><span className="pill pill-gray">ID {String(site.site_id ?? "")}</span></div><div className="site-detail-list info-list">
                       <DetailRow icon="pin" label="Site address" value={[site.address, site.site_area].filter(Boolean).join(", ") || "Address not set"} />
                       <DetailRow icon="route" label="F1 zone" value={String(site.f1_zone ?? "Not set")} />
                       <DetailRow icon="vehicle" label="Day vehicle crew" value={crewLabel(dayVehicle, "day")} />
@@ -160,7 +161,7 @@ function DashboardContent({ profile }: { profile: Profile }) {
                       <DetailRow icon="people" label="Zong lead" value={contactValue(site.zong_lead_name, site.zong_lead_phone)} />
                       <DetailRow icon="people" label="Security SO" value={contactValue(site.security_so_name, site.security_so_phone)} />
                     </div></section>
-                    <section className="data-section"><h3 className="section-title"><AppIcon name="fuel" />Last fueling</h3><div className="last-fueling">
+                    <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="fuel" />Last fueling</div><div className="card-subtitle">Most recent recorded generator fueling</div></div><span className="pill pill-gray">{formatFuelingDate(current.fueling_date)}</span></div><div className="last-fueling fuel-card-body">
                       <Value label="Fueling date" value={formatFuelingDate(current.fueling_date)} />
                       <Value label="Available fuel" value={formatValue(current.available_fuel, " L")} />
                       <Value label="Fuel poured" value={formatValue(current.fuel_poured, " L")} />
@@ -172,19 +173,25 @@ function DashboardContent({ profile }: { profile: Profile }) {
                       <Value label="Average consumption" value={formatValue(current.average_consumption, " L/h")} highlight />
                     </div></section>
                   </div>
-                  <div className="message-section"><div className="message-head"><div><h3 className="section-title"><AppIcon name="message" />Forward to FormulaOne team</h3><p className="muted">Review the request before sharing it in WhatsApp.</p></div>
+                  <div className="message-section card forward-card"><div className="message-head forward-head"><div><h3 className="section-title forward-title"><AppIcon name="message" />Prepare fuel request</h3><p className="muted forward-sub">Review, copy and paste this request into WhatsApp manually.</p></div>
                     <label>Team to notify<select value={targetShift} onChange={(event) => setTargetShift(event.target.value as "day" | "night")}><option value="day">Day team</option><option value="night">Night team</option></select></label>
                   </div>
-                    <div className="message-preview"><pre>{message}</pre><button type="button" className="secondary-button copy-button" onClick={copyMessage}><AppIcon name="copy" />Copy</button></div>
+                    <div className="message-preview forward-body"><pre>{message}</pre><button type="button" className="btn btn-secondary copy-button" onClick={copyMessage}><AppIcon name="copy" />Copy message</button></div>
                   </div>
                 </section>
               )}
             </>
           ) : <AdminSection section={section} />}</div>
-        </main>
-      </div>
+      </main>
+      <nav className="mobile-bottom-nav" aria-label="Workspace">
+        {visibleNav.map((item) => <button key={item.id} className={section === item.id ? "mobile-active" : ""} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
+      </nav>
     </div>
   );
+}
+
+function sectionLabel(section: Section) {
+  return navItems.find((item) => item.id === section)?.label ?? "My profile";
 }
 
 function ProfilePanel({ profile, onNameSaved, onSignOut }: { profile: Profile; onNameSaved: (name: string) => void; onSignOut: () => void }) {
@@ -223,16 +230,19 @@ function ProfilePanel({ profile, onNameSaved, onSignOut }: { profile: Profile; o
   }
 
   return <section className="profile-page">
-    <div className="profile-hero"><span className="avatar-large">{profile.name.trim().slice(0, 1).toUpperCase() || "U"}</span><div><h1>My profile</h1><p>Login ID: {profile.email} <span className="role-chip">{profile.role.replaceAll("_", " ")}</span></p></div><button className="quiet-button profile-signout" onClick={onSignOut}>Sign out</button></div>
-    <div className="profile-cards">
-      <form className="profile-card" onSubmit={saveName}><div><h2>Profile details</h2><p className="muted">Your name appears in the app header and staff list.</p></div><label>Display name<input value={name} onChange={(event) => setName(event.target.value)} required maxLength={80} /></label><button className="primary-button" disabled={busy || !name.trim()}>{busy ? "Saving…" : "Save name"}</button></form>
-      <form className="profile-card" onSubmit={savePassword}><div><h2>Change password</h2><p className="muted">Use at least 8 characters for your new password.</p></div><label>New password<input type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} /></label><label>Confirm new password<input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} /></label><button className="primary-button" disabled={busy}>{busy ? "Updating…" : "Update password"}</button></form>
+    <div className="page-heading"><div className="heading-copy"><div className="eyebrow">Account settings</div><h1>My profile</h1><p>Manage your display name and password for your Fuel Ops account.</p></div><div className="heading-actions"><button className="btn btn-secondary" onClick={onSignOut}>Sign out</button></div></div>
+    <div className="profile-layout">
+      <section className="card profile-summary"><div className="profile-identity"><span className="profile-avatar-large">{profile.name.trim().slice(0, 1).toUpperCase() || "U"}</span><div><h2>{profile.name}</h2><p>{profile.role.replaceAll("_", " ")} · Fuel Ops</p></div></div><div className="profile-kv"><span>Login ID</span><strong>{profile.email}</strong></div><div className="profile-kv"><span>Account role</span><strong>{profile.role.replaceAll("_", " ")}</strong></div><div className="profile-kv"><span>Account status</span><strong><span className="pill pill-green">Active</span></strong></div><div className="security-hint">Your permissions are managed through your assigned account role.</div></section>
+      <div className="profile-settings-stack">
+        <form className="card profile-form-card" onSubmit={saveName}><div className="card-title"><AppIcon name="user" />Personal details</div><div className="card-subtitle">Update the name displayed in the Fuel Ops workspace.</div><div className="form-grid" style={{ marginTop: 17 }}><label className="field field-full">Display name<input value={name} onChange={(event) => setName(event.target.value)} required maxLength={80} /></label><div><button className="btn btn-primary" disabled={busy || !name.trim()}>{busy ? "Saving…" : "Save changes"}</button></div></div></form>
+        <form className="card profile-form-card" onSubmit={savePassword}><div className="card-title"><AppIcon name="user" />Change password</div><div className="card-subtitle">Use at least 8 characters for your new password.</div><div className="form-grid" style={{ marginTop: 17 }}><label className="field">New password<input type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} /></label><label className="field">Confirm new password<input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} /></label><div className="field-full"><button className="btn btn-primary" disabled={busy}>{busy ? "Updating…" : "Update password"}</button></div></div></form>
+      </div>
     </div>
   </section>;
 }
 
 function Value({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
-  return <div className={highlight ? "data-value average-value" : "data-value"}><span className="data-label">{label}</span><strong>{value || "N/A"}</strong></div>;
+  return <div className={highlight ? "data-value reading-row average-value" : "data-value reading-row"}><span className="data-label">{label}</span><strong>{value || "N/A"}</strong></div>;
 }
 function formatValue(value: unknown, suffix = "") {
   if (value === null || value === undefined || value === "") return "N/A";
@@ -267,7 +277,7 @@ function meterLabel(value: unknown) {
 }
 
 function DetailRow({ icon, label, value }: { icon: "pin" | "route" | "people" | "user" | "vehicle"; label: string; value: string }) {
-  return <div className="detail-row"><AppIcon name={icon} /><div><strong>{label}</strong><span>{value || "Not provided"}</span></div></div>;
+  return <div className="detail-row info-row"><span className="info-icon"><AppIcon name={icon} /></span><div><span className="info-label">{label}</span><span className="info-value">{value || "Not provided"}</span></div></div>;
 }
 
 function DropIcon() { return <svg viewBox="0 0 32 40" aria-hidden="true"><path d="M16 1.8C13 8.2 3.4 17.6 3.4 25.2A12.6 12.6 0 0 0 28.6 25C28.6 17.6 19 8.2 16 1.8Z" fill="currentColor"/><path d="M10.2 26a6.1 6.1 0 0 0 6.1 6.1" fill="none" stroke="#123b36" strokeWidth="2.3" strokeLinecap="round"/></svg>; }

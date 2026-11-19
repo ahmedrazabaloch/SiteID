@@ -95,15 +95,14 @@ function ImportPanel({ kind, notify, onCommitted }: { kind: "daily" | "master"; 
     }
   }
 
-  return <section className="admin-placeholder">
-    <h1>{title}</h1><p className="muted">{subtitle}</p>
-    <div className="import-audit" aria-live="polite"><span className="import-audit-mark" aria-hidden="true">↻</span><div><strong>{auditLoading ? "Loading last update…" : auditFailed ? "Last update details unavailable" : lastImport ? "Last updated" : "No imports recorded yet"}</strong>{lastImport && !auditFailed && <p><time dateTime={lastImport.imported_at}>{formatImportDate(lastImport.imported_at)}</time><span>by <b>{lastImport.full_name}</b></span><span>{lastImport.imported_rows.toLocaleString("en-US")} sites</span><span className="import-audit-file">{lastImport.file_name}</span></p>}</div></div>
-    <div className="admin-form">
-      <label>Excel workbook (.xlsx)<input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { setFile(event.target.files?.[0] ?? null); setPreview(null); }} /></label>
-      {file && <p className="selected-file">Selected: <strong>{file.name}</strong></p>}
+  return <section className={`admin-placeholder import-page ${kind}-import-page`}>
+    <div className="page-heading"><div className="heading-copy"><div className="eyebrow">{kind === "daily" ? "Fuel reporting" : "Master data"}</div><h1>{title}</h1><p>{subtitle}</p></div></div>
+    <div className="import-audit last-import" aria-live="polite"><span className="import-audit-mark last-import-icon" aria-hidden="true">↻</span><div><strong>{auditLoading ? "Loading last update…" : auditFailed ? "Last update details unavailable" : lastImport ? "Last updated" : "No imports recorded yet"}</strong>{lastImport && !auditFailed && <p><time dateTime={lastImport.imported_at}>{formatImportDate(lastImport.imported_at)}</time><span>by <b>{lastImport.full_name}</b></span><span>{lastImport.imported_rows.toLocaleString("en-US")} sites</span><span className="import-audit-file">{lastImport.file_name}</span></p>}</div></div>
+    <div className="admin-form card import-card">
+      <div className="field"><label htmlFor={`${kind}-workbook`}>Excel workbook (.xlsx)</label><label className="file-drop" htmlFor={`${kind}-workbook`}><span className="file-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6m-3-3 3 3 3-3"/></svg></span><span className="file-copy"><strong>{file?.name || `Choose a ${kind === "daily" ? "daily fueling" : "master sites"} workbook`}</strong><span>Accepted format: .xlsx · Review the preview before importing.</span></span><input id={`${kind}-workbook`} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { setFile(event.target.files?.[0] ?? null); setPreview(null); }} /></label></div>
       <div className="button-row"><button className="primary-button" type="button" disabled={!file || busy} onClick={() => send("preview")}>{busy ? "Reading workbook…" : "Preview import"}</button></div>
     </div>
-    {preview && !preview.error && <div className="preview-box" aria-live="polite">
+    {preview && !preview.error && <div className="preview-box card card-pad" aria-live="polite">
       <div className="preview-title"><strong>{preview.fileName}</strong><span className="preview-count">{preview.rowCount ?? 0} records ready</span></div>
       <p>{preview.errors?.length ?? 0} issues found · {preview.warnings?.length ?? 0} warnings</p>
       {!!preview.errors?.length && <><ul className="preview-errors">{preview.errors.slice(0, 8).map((error, index) => <li key={index}>Row {error.row} · Site {error.siteId}: {error.issue}</li>)}</ul>{preview.errors.length > 8 && <p className="muted">Showing 8 of {preview.errors.length} issues.</p>}</>}
@@ -179,15 +178,16 @@ function VehiclePanel({ notify }: { notify: Notify }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  return <section className="admin-placeholder vehicle-page"><h1>Route vehicles</h1><p className="muted">Manage the vehicle, area, duty, driver and supervisor assignments. A vehicle can have separate Day and Night assignments.</p>
-    <form className="admin-grid vehicle-form" onSubmit={save}>
-      <label>Duty<select value={form.field_shift} onChange={(event) => setForm((current) => ({ ...current, field_shift: event.target.value as "day" | "night" }))}><option value="day">Day</option><option value="night">Night</option></select></label>
-      <label>Vehicle number<input value={form.vehicle_number} onChange={(event) => setForm((current) => ({ ...current, vehicle_number: event.target.value }))} required /></label>
-      <label>Zone area<input value={form.route} onChange={(event) => setForm((current) => ({ ...current, route: event.target.value }))} required /></label>
-      <label>FormulaOne team name (optional)<input value={form.team} onChange={(event) => setForm((current) => ({ ...current, team: event.target.value }))} placeholder="Defaults to zone area" /></label>
-      <label>Driver<input value={form.driver} onChange={(event) => setForm((current) => ({ ...current, driver: event.target.value }))} /></label>
-      <label>Supervisor<input value={form.fueler_supervisor} onChange={(event) => setForm((current) => ({ ...current, fueler_supervisor: event.target.value }))} /></label>
-      <div className="vehicle-form-actions"><button className="primary-button" type="submit" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Add vehicle"}</button>{editing && <button className="secondary-button" type="button" onClick={() => { setEditing(null); setForm({ route: "", field_shift: "day", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" }); }}>Cancel edit</button>}</div>
+  return <section className="admin-placeholder vehicle-page">
+    <div className="page-heading"><div className="heading-copy"><div className="eyebrow">Fleet assignments</div><h1>Route vehicles</h1><p>Manage vehicle, zone, duty, driver and supervisor assignments. Day and Night duties can be assigned separately.</p></div><div className="heading-actions"><span className="pill pill-blue">{vehicles.length} assignments</span></div></div>
+    <form className="admin-grid vehicle-form form-grid card card-pad" onSubmit={save}>
+      <label className="field">Duty<select value={form.field_shift} onChange={(event) => setForm((current) => ({ ...current, field_shift: event.target.value as "day" | "night" }))}><option value="day">Day</option><option value="night">Night</option></select></label>
+      <label className="field">Vehicle number<input value={form.vehicle_number} onChange={(event) => setForm((current) => ({ ...current, vehicle_number: event.target.value }))} required /></label>
+      <label className="field">Zone area<input value={form.route} onChange={(event) => setForm((current) => ({ ...current, route: event.target.value }))} required /></label>
+      <label className="field">FormulaOne team name (optional)<input value={form.team} onChange={(event) => setForm((current) => ({ ...current, team: event.target.value }))} placeholder="Defaults to zone area" /></label>
+      <label className="field">Driver<input value={form.driver} onChange={(event) => setForm((current) => ({ ...current, driver: event.target.value }))} /></label>
+      <label className="field">Supervisor<input value={form.fueler_supervisor} onChange={(event) => setForm((current) => ({ ...current, fueler_supervisor: event.target.value }))} /></label>
+      <div className="vehicle-form-actions"><button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Add vehicle"}</button>{editing && <button className="btn btn-secondary" type="button" onClick={() => { setEditing(null); setForm({ route: "", field_shift: "day", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" }); }}>Cancel edit</button>}</div>
     </form>
     <div className="vehicle-list-heading"><h2>Vehicle assignments</h2><span>{vehicles.length} total</span></div>
     <div className="table-wrap vehicle-table"><table><thead><tr><th>Duty</th><th>FormulaOne team</th><th>Vehicle number</th><th>Zone area</th><th>Driver</th><th>Supervisor</th><th><span className="visually-hidden">Actions</span></th></tr></thead><tbody>
@@ -275,14 +275,14 @@ function UserManagementPanel({ notify }: { notify: Notify }) {
   }
 
   return <section className="admin-placeholder user-management-page">
-    <h1>Users & access</h1><p className="muted">As super admin, create Admin and Operator accounts with a unique 11-digit ID. Passwords are stored securely by Supabase and shown once after creation.</p>
-    <form className="admin-grid user-create-form" onSubmit={createAccount}>
-      <label>ID number<input inputMode="numeric" autoComplete="off" maxLength={11} placeholder="03139090700" value={form.username} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value.replace(/\D/g, "").slice(0, 11) }))} required /></label>
-      <label>Full name<input autoComplete="off" maxLength={80} value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} required /></label>
-      <label>Account role<select value={form.role} onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as "admin" | "operator" }))}><option value="operator">Operator</option><option value="admin">Admin</option></select></label>
-      <label>Duty shift<select value={form.shift} onChange={(event) => setForm((current) => ({ ...current, shift: event.target.value as "day" | "evening" | "night" }))}><option value="day">Day · 08:00–16:00</option><option value="evening">Evening · 16:00–00:00</option><option value="night">Night · 00:00–08:00</option></select></label>
-      <label className="user-password-field">Initial password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={10} value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} required /><div className="password-actions"><button type="button" className="secondary-button" onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? "Hide password" : "Show password"}</button><button type="button" className="secondary-button" onClick={generatePassword}>Generate password</button></div></label>
-      <div className="vehicle-form-actions"><button className="primary-button" type="submit" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button></div>
+    <div className="page-heading"><div className="heading-copy"><div className="eyebrow">Administration</div><h1>Users & access</h1><p>Create and manage staff accounts. Each account uses a unique 11-digit ID; the initial password is shown only during account creation.</p></div></div>
+    <form className="admin-grid user-create-form form-grid card card-pad" onSubmit={createAccount}>
+      <label className="field">ID number<input inputMode="numeric" autoComplete="off" maxLength={11} placeholder="03139090700" value={form.username} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value.replace(/\D/g, "").slice(0, 11) }))} required /></label>
+      <label className="field">Full name<input autoComplete="off" maxLength={80} value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} required /></label>
+      <label className="field">Account role<select value={form.role} onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as "admin" | "operator" }))}><option value="operator">Operator</option><option value="admin">Admin</option></select></label>
+      <label className="field">Duty shift<select value={form.shift} onChange={(event) => setForm((current) => ({ ...current, shift: event.target.value as "day" | "evening" | "night" }))}><option value="day">Day · 08:00–16:00</option><option value="evening">Evening · 16:00–00:00</option><option value="night">Night · 00:00–08:00</option></select></label>
+      <label className="user-password-field field field-full">Initial password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={10} value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} required /><div className="password-actions"><button type="button" className="btn btn-secondary" onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? "Hide password" : "Show password"}</button><button type="button" className="btn btn-secondary" onClick={generatePassword}>Generate password</button></div></label>
+      <div className="vehicle-form-actions"><button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button></div>
     </form>
     {createdCredentials && <div className="credentials-card"><div><strong>Share these login details with {createdCredentials.fullName}</strong><p>ID: <code>{createdCredentials.username}</code> · Password: <code>{createdCredentials.password}</code></p></div><button className="secondary-button" type="button" onClick={copyCredentials}>Copy login details</button><button className="credential-dismiss" type="button" onClick={() => setCreatedCredentials(null)} aria-label="Hide credentials">×</button></div>}
     <div className="vehicle-list-heading"><h2>Accounts</h2><span>{users.length} total</span></div>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
+import "./redesign-prototype.css";
+import "./redesign-adapter.css";
 import { ServiceWorker } from "@/components/service-worker";
 
 const roboto = Roboto({
