@@ -98,6 +98,18 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .master-import-page .admin-form .button-row { justify-content: space-between; margin-top: 0; }
 .master-import-page .button-row .last-import { max-width: 70%; }
 .master-import-page .preview-box { margin-top: 0; }
+.daily-import-page .import-card { width: 100%; max-width: none; margin: 0 0 16px; padding: 14px 16px; }
+.daily-import-page .file-drop { min-height: 58px; padding: 9px 11px; flex-direction: row; align-items: center; }
+.daily-import-page .file-icon { width: 34px; height: 34px; }
+.daily-import-page .file-icon svg { width: 22px; height: 22px; }
+.daily-import-page .file-copy { display: grid; gap: 3px; }
+.daily-import-page .file-copy strong { margin: 0; }
+.daily-import-page .admin-form .file-drop input[type="file"] { width: min(290px, 37%); min-height: 36px; flex: 0 1 290px; font-size: 11px; }
+.daily-import-page .file-drop input[type="file"]::file-selector-button { min-height: 34px; margin-right: 9px; padding: 0 12px; border: 1px solid #b8d9cc; border-radius: 8px; background: #e8f6ef; color: #08785a; font: inherit; font-weight: 700; cursor: pointer; }
+.daily-import-page .file-drop input[type="file"]::file-selector-button:hover { border-color: #8fc8b3; background: #d9f0e5; }
+.daily-import-page .admin-form .button-row { justify-content: space-between; margin-top: 0; }
+.daily-import-page .button-row .last-import { max-width: 70%; }
+.daily-import-page .preview-box { margin-top: 0; }
 .selected-file { margin: -3px 0 0; color: var(--muted); font-size: 11px; }
 .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .button-row .primary-button, .preview-box > .primary-button { min-height: 40px; }
@@ -238,6 +250,10 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
   .master-import-page .button-row { align-items: stretch; flex-direction: column; }
   .master-import-page .button-row .last-import { width: 100%; max-width: none; }
   .master-import-page .admin-form .file-drop input[type="file"] { width: 100%; max-width: 100%; flex-basis: 100%; }
+  .daily-import-page .import-card { max-width: 100%; }
+  .daily-import-page .button-row { align-items: stretch; flex-direction: column; }
+  .daily-import-page .button-row .last-import { width: 100%; max-width: none; }
+  .daily-import-page .admin-form .file-drop input[type="file"] { width: 100%; max-width: 100%; flex-basis: 100%; }
   .site-manager-actions { width: 100%; justify-content: space-between; }
   .site-list-heading { align-items: flex-start; }
   .site-list-title { align-self: flex-end; }
