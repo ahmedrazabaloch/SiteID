@@ -84,7 +84,7 @@ function ImportPanel({ kind, notify, onCommitted }: { kind: "daily" | "master"; 
       } else if (body.errors?.length) {
         notify(`${body.errors.length} row${body.errors.length === 1 ? " needs" : "s need"} attention. Review the preview below.`, "warning");
       } else if (body.warnings?.length) {
-        notify(`${body.rowCount ?? 0} records are ready; ${body.warnings.length} duplicate row${body.warnings.length === 1 ? " was" : "s were"} skipped using the first row.`, "warning");
+        notify(`${body.rowCount ?? 0} records are ready; ${body.warnings.length} row${body.warnings.length === 1 ? " was" : "s were"} skipped with warnings. Review the details below.`, "warning");
       } else {
         notify(`${body.rowCount ?? 0} records are ready to import.`, "success");
       }
@@ -105,9 +105,9 @@ function ImportPanel({ kind, notify, onCommitted }: { kind: "daily" | "master"; 
     </div>
     {preview && !preview.error && <div className="preview-box" aria-live="polite">
       <div className="preview-title"><strong>{preview.fileName}</strong><span className="preview-count">{preview.rowCount ?? 0} records ready</span></div>
-      <p>{preview.errors?.length ?? 0} issues found · {preview.warnings?.length ?? 0} duplicate rows skipped</p>
+      <p>{preview.errors?.length ?? 0} issues found · {preview.warnings?.length ?? 0} warnings</p>
       {!!preview.errors?.length && <><ul className="preview-errors">{preview.errors.slice(0, 8).map((error, index) => <li key={index}>Row {error.row} · Site {error.siteId}: {error.issue}</li>)}</ul>{preview.errors.length > 8 && <p className="muted">Showing 8 of {preview.errors.length} issues.</p>}</>}
-      {!!preview.warnings?.length && <><ul className="preview-warnings">{preview.warnings.slice(0, 8).map((warning, index) => <li key={index}>Row {warning.row} · Site {warning.siteId}: {warning.issue}</li>)}</ul>{preview.warnings.length > 8 && <p className="muted">Showing 8 of {preview.warnings.length} duplicate rows.</p>}</>}
+      {!!preview.warnings?.length && <><ul className="preview-warnings">{preview.warnings.slice(0, 8).map((warning, index) => <li key={index}>Row {warning.row} · Site {warning.siteId}: {warning.issue}</li>)}</ul>{preview.warnings.length > 8 && <p className="muted">Showing 8 of {preview.warnings.length} warnings.</p>}</>}
       {preview.sample?.length ? <div className="table-wrap preview-table"><table><thead><tr>{Object.keys(preview.sample[0]).map((column) => <th key={column}>{column.replaceAll("_", " ")}</th>)}</tr></thead><tbody>{preview.sample.map((row, index) => <tr key={index}>{Object.keys(preview.sample?.[0] ?? {}).map((column) => <td key={column}>{String(row[column] ?? "N/A")}</td>)}</tr>)}</tbody></table></div> : null}
       {preview.rowCount && !preview.errors?.length && preview.imported === undefined && <button className="primary-button" type="button" disabled={busy} onClick={() => send("commit")}>{busy ? "Importing…" : "Confirm and import"}</button>}
       {preview.imported !== undefined && <p className="success-text">{preview.imported} site records imported. Latest values are now saved.</p>}

@@ -65,14 +65,19 @@ export async function POST(request: Request) {
     const availableCol = firstIndex(headers, ["available fuel", "fuel available", "fuel available before l", "fuel available before", "previous stock"]);
     const pouredCol = firstIndex(headers, ["fuel poured", "fuel added", "fuel added l", "quantity filled"]);
     const readingCol = firstIndex(headers, ["current reading", "current dg reading", "present reading"]);
+    const previousReadingCol = firstIndex(headers, ["previous reading", "last reading"]);
+    const previousTotalCol = firstIndex(headers, ["total maintained", "total fuel"]);
     const meterStatusCol = firstIndex(headers, ["dg meter status", "meter status"]);
     const needed = [idCol, dateCol, availableCol, pouredCol, readingCol];
     if (needed.some((index) => index < 0)) {
       return NextResponse.json({ error: "Required columns: Site ID, Fueling Date, Available Fuel, Fuel Poured, Current Reading." }, { status: 400 });
     }
 
-    const latestBySite = new Map<string, { rowNumber: number; item: Record<string, unknown> }>();
+    const latestBySite = new Map<string, { rowNumber: number; fuelingDate: string; item: Record<string, unknown> }>();
+    const validRowsBySite = new Map<string, { rowNumber: number; fuelingDate: string; item: Record<string, unknown> }[]>();
+    const invalidRows: { row: number; siteId: string; fuelingDate: string | null; issue: string }[] = [];
     const errors: { row: number; siteId: string; issue: string }[] = [];
+    const warnings: { row: number; siteId: string; issue: string }[] = [];
     for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
       const siteId = clean(row.getCell(idCol + 1).value);
@@ -81,17 +86,54 @@ export async function POST(request: Request) {
       const availableFuel = asNumber(row.getCell(availableCol + 1).value);
       const fuelPoured = asNumber(row.getCell(pouredCol + 1).value);
       const currentReading = asNumber(row.getCell(readingCol + 1).value);
+      const previousReading = previousReadingCol < 0 ? null : asNumber(row.getCell(previousReadingCol + 1).value);
       const dgMeterStatus = meterStatusCol < 0 ? null : meterStatus(row.getCell(meterStatusCol + 1).value);
-      if (!fuelingDate || availableFuel === null || fuelPoured === null) {
-        errors.push({ row: rowNumber, siteId, issue: "Missing/invalid date or fuel amount" });
+      if (!fuelingDate || availableFuel === null || fuelPoured === null || availableFuel < 0 || fuelPoured < 0) {
+        invalidRows.push({ row: rowNumber, siteId, fuelingDate, issue: "Missing/invalid date or non-negative fuel amount" });
         continue;
       }
-      const item = { site_id: siteId, fueling_date: fuelingDate, available_fuel: availableFuel, fuel_poured: fuelPoured, current_reading: currentReading, ...(dgMeterStatus ? { dg_meter_status: dgMeterStatus } : {}) };
+      const sourceTotalFuel = previousTotalCol < 0 ? null : asNumber(row.getCell(previousTotalCol + 1).value);
+      const item = {
+        site_id: siteId,
+        fueling_date: fuelingDate,
+        available_fuel: availableFuel,
+        fuel_poured: fuelPoured,
+        current_reading: currentReading,
+        source_previous_reading: previousReading,
+        source_previous_fueling_date: null,
+        source_total_fuel: sourceTotalFuel,
+        ...(dgMeterStatus ? { dg_meter_status: dgMeterStatus } : {}),
+      };
+      const candidates = validRowsBySite.get(siteId) ?? [];
+      candidates.push({ rowNumber, fuelingDate, item });
+      validRowsBySite.set(siteId, candidates);
       const previous = latestBySite.get(siteId);
-      if (!previous || fuelingDate >= String(previous.item.fueling_date)) latestBySite.set(siteId, { rowNumber, item });
+      if (!previous || fuelingDate > previous.fuelingDate || (fuelingDate === previous.fuelingDate && rowNumber > previous.rowNumber)) {
+        latestBySite.set(siteId, { rowNumber, fuelingDate, item });
+      }
     }
 
-    const rows = [...latestBySite.values()].map(({ item }) => item);
+    for (const invalid of invalidRows) {
+      const latest = latestBySite.get(invalid.siteId);
+      const isOlderThanLatest = latest && invalid.fuelingDate
+        && (invalid.fuelingDate < latest.fuelingDate || (invalid.fuelingDate === latest.fuelingDate && invalid.row < latest.rowNumber));
+      (isOlderThanLatest ? warnings : errors).push({
+        row: invalid.row,
+        siteId: invalid.siteId,
+        issue: isOlderThanLatest ? invalid.issue + "; older row skipped because a newer valid entry exists" : invalid.issue,
+      });
+    }
+
+    const rows: Record<string, unknown>[] = [...latestBySite.entries()].map(([siteId, latest]) => {
+      const previous = (validRowsBySite.get(siteId) ?? [])
+        .filter((entry) => entry.fuelingDate < latest.fuelingDate || (entry.fuelingDate === latest.fuelingDate && entry.rowNumber < latest.rowNumber))
+        .sort((a, b) => b.fuelingDate.localeCompare(a.fuelingDate) || b.rowNumber - a.rowNumber)[0];
+      return {
+        ...latest.item,
+        source_previous_fueling_date: previous?.fuelingDate ?? null,
+        source_previous_total_fuel: previous?.item.source_total_fuel ?? null,
+      };
+    });
     const ids = rows.map((row) => String(row.site_id));
     const known = new Set<string>();
     if (ids.length) {
@@ -113,7 +155,7 @@ export async function POST(request: Request) {
       if (error) throw error;
       return NextResponse.json({ imported: validRows.length, result: data });
     }
-    return NextResponse.json({ fileName: file.name, rowCount: validRows.length, errors, sample: validRows.slice(0, 8) });
+    return NextResponse.json({ fileName: file.name, rowCount: validRows.length, errors, warnings, sample: validRows.slice(0, 8) });
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : "Import failed.";
     return NextResponse.json({ error: message }, { status: 500 });

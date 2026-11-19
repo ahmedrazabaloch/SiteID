@@ -10,7 +10,8 @@
     "db:status": "supabase migration list --remote",
     "db:baseline": "supabase migration repair --status applied 20261114000000 --remote",
     "db:push": "supabase db push --remote",
-    "import:master": "node scripts/import-master-workbook.mjs"
+    "import:master": "node scripts/import-master-workbook.mjs",
+    "import:daily": "node scripts/import-daily-workbook.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
