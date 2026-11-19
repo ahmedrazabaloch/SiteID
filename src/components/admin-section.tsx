@@ -22,13 +22,14 @@ export function AdminSection({ section }: { section: Section }) {
 
 function MasterSitesPanel({ notify }: { notify: Notify }) {
   const [refreshToken, setRefreshToken] = useState(0);
+  const [addSiteRequest, setAddSiteRequest] = useState(0);
   return <>
-    <ImportPanel kind="master" notify={notify} onCommitted={() => setRefreshToken((value) => value + 1)} />
-    <SiteMasterManager notify={notify} refreshToken={refreshToken} />
+    <ImportPanel kind="master" notify={notify} onAddSite={() => setAddSiteRequest((value) => value + 1)} onCommitted={() => setRefreshToken((value) => value + 1)} />
+    <SiteMasterManager notify={notify} refreshToken={refreshToken} addSiteRequest={addSiteRequest} />
   </>;
 }
 
-function ImportPanel({ kind, notify, onCommitted }: { kind: "daily" | "master"; notify: Notify; onCommitted?: () => void }) {
+function ImportPanel({ kind, notify, onCommitted, onAddSite }: { kind: "daily" | "master"; notify: Notify; onCommitted?: () => void; onAddSite?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -95,6 +96,7 @@ function ImportPanel({ kind, notify, onCommitted }: { kind: "daily" | "master"; 
 
   return <section className={`admin-placeholder import-page ${kind}-import-page`}>
     {kind === "daily" && lastImportSummary}
+    {kind === "master" && <div className="master-import-actions"><button className="btn btn-primary" type="button" onClick={onAddSite}>Add a site</button></div>}
     <div className="admin-form card import-card">
       <div className="field"><label htmlFor={`${kind}-workbook`}>Excel workbook (.xlsx)</label><label className="file-drop" htmlFor={`${kind}-workbook`}><span className="file-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6m-3-3 3 3 3-3"/></svg></span><span className="file-copy"><strong>{file?.name || `Choose a ${kind === "daily" ? "daily fueling" : "master sites"} workbook`}</strong><span>Accepted format: .xlsx · Review the preview before importing.</span></span><input id={`${kind}-workbook`} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { setFile(event.target.files?.[0] ?? null); setPreview(null); }} /></label></div>
       <div className="button-row"><button className="primary-button" type="button" disabled={!file || busy} onClick={() => send("preview")}>{busy ? "Reading workbook…" : "Preview import"}</button>{kind === "master" && lastImportSummary}</div>

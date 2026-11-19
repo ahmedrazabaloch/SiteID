@@ -18,7 +18,7 @@ const groups: { title: string; fields: readonly (readonly [string, string])[] }[
 
 const emptyForm: Record<string, string> = Object.fromEntries(groups.flatMap((group) => group.fields).map(([key]) => [key, key === "dg_meter_status" ? "unknown" : ""]));
 
-export function SiteMasterManager({ notify, refreshToken }: { notify: Notify; refreshToken: number }) {
+export function SiteMasterManager({ notify, refreshToken, addSiteRequest }: { notify: Notify; refreshToken: number; addSiteRequest: number }) {
   const [sites, setSites] = useState<Site[]>([]);
   const [updaterNames, setUpdaterNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -67,6 +67,15 @@ export function SiteMasterManager({ notify, refreshToken }: { notify: Notify; re
   useEffect(() => { void loadSites(); }, [loadSites, refreshToken]);
 
   useEffect(() => {
+    if (addSiteRequest > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Open the editor in response to the Add a site action in the page header.
+      setForm(emptyForm);
+      setEditingId(null);
+      setEditorOpen(true);
+    }
+  }, [addSiteRequest]);
+
+  useEffect(() => {
     if (!editorOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape" && !busy) setEditorOpen(false); };
     document.addEventListener("keydown", closeOnEscape);
@@ -75,7 +84,6 @@ export function SiteMasterManager({ notify, refreshToken }: { notify: Notify; re
   }, [editorOpen, busy]);
 
   function resetForm() { setForm(emptyForm); setEditingId(null); setEditorOpen(false); }
-  function addSite() { setForm(emptyForm); setEditingId(null); setEditorOpen(true); }
   function editSite(site: Site) {
     const next = { ...emptyForm };
     for (const group of groups) for (const [key] of group.fields) next[key] = String(site[key] ?? "");
@@ -108,7 +116,6 @@ export function SiteMasterManager({ notify, refreshToken }: { notify: Notify; re
   }
 
   return <section className="site-master-manager">
-    <div className="site-manager-top-actions"><button className="btn btn-primary" type="button" onClick={addSite}>Add a site</button></div>
     {editorOpen && <div className="site-editor-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) resetForm(); }}>
       <section className="site-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="site-editor-title">
         <header className="site-editor-header"><div><span className="eyebrow">Master data</span><h2 id="site-editor-title">{editingId ? `Edit site ${editingId}` : "Add a site"}</h2><p>Enter location, team, contact and generator details.</p></div><button className="site-editor-close" type="button" aria-label="Close site editor" disabled={busy} onClick={resetForm}>×</button></header>

@@ -83,6 +83,7 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .admin-form .file-drop { gap: 13px; }
 .admin-form .file-drop input[type="file"] { width: min(34%, 290px); min-height: 0; flex: 0 1 290px; padding: 0; border: 0; background: transparent; font-size: 10px; }
 .master-import-page { display: block; }
+.master-import-actions { display: flex; justify-content: flex-end; margin: 0 0 10px; }
 .master-import-page .last-import { min-width: 0; margin: 0; padding: 11px 13px; }
 .master-import-page .last-import p { gap: 4px 10px; }
 .master-import-page .import-card { width: 100%; max-width: none; margin: 0 0 16px; padding: 14px 16px; }
@@ -138,7 +139,6 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .user-security-note { margin: 12px 0 0; color: var(--muted); font-size: 11px; }
 .site-master-manager { max-width: 1200px; margin-top: 27px; padding-top: 23px; border-top: 1px solid var(--line); }
 .site-manager-heading { margin-bottom: 16px; }
-.site-manager-top-actions { display: flex; justify-content: flex-end; margin: 0 0 12px; }
 .site-manager-actions { display: flex; align-items: center; gap: 10px; }
 .site-manager-heading p, .site-list-heading p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .site-master-form { display: grid; gap: 0; }
