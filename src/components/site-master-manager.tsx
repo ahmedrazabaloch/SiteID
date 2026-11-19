@@ -30,6 +30,7 @@ export function SiteMasterManager({ notify, refreshToken }: { notify: Notify; re
   const [totalCount, setTotalCount] = useState(0);
   const [form, setForm] = useState<Record<string, string>>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const loadSites = useCallback(async () => {
     setLoading(true);
@@ -65,12 +66,20 @@ export function SiteMasterManager({ notify, refreshToken }: { notify: Notify; re
   // eslint-disable-next-line react-hooks/set-state-in-effect -- Fetch the active server-side page and refresh after imports.
   useEffect(() => { void loadSites(); }, [loadSites, refreshToken]);
 
-  function resetForm() { setForm(emptyForm); setEditingId(null); }
+  useEffect(() => {
+    if (!editorOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape" && !busy) setEditorOpen(false); };
+    document.addEventListener("keydown", closeOnEscape);
+    document.body.classList.add("site-editor-open");
+    return () => { document.removeEventListener("keydown", closeOnEscape); document.body.classList.remove("site-editor-open"); };
+  }, [editorOpen, busy]);
+
+  function resetForm() { setForm(emptyForm); setEditingId(null); setEditorOpen(false); }
+  function addSite() { setForm(emptyForm); setEditingId(null); setEditorOpen(true); }
   function editSite(site: Site) {
     const next = { ...emptyForm };
     for (const group of groups) for (const [key] of group.fields) next[key] = String(site[key] ?? "");
-    setForm(next); setEditingId(site.site_id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setForm(next); setEditingId(site.site_id); setEditorOpen(true);
   }
 
   async function saveSite(event: FormEvent<HTMLFormElement>) {
@@ -99,8 +108,11 @@ export function SiteMasterManager({ notify, refreshToken }: { notify: Notify; re
   }
 
   return <section className="site-master-manager">
-    <div className="site-manager-heading section-toolbar"><div><h2>{editingId ? "Edit site " + editingId : "Maintain site records"}</h2><p>Maintain site details here. Driver and supervisor are shown from the matching Route Vehicles assignment.</p></div><span className="site-total pill pill-green">{totalCount.toLocaleString("en-US")} sites</span></div>
-    <form className="site-master-form card card-pad" onSubmit={saveSite}>
+    <div className="site-manager-heading section-toolbar"><div><h2>Master site records</h2><p>Search, review and edit site details. Add a site when a new tower comes online.</p></div><div className="site-manager-actions"><span className="site-total pill pill-green">{totalCount.toLocaleString("en-US")} sites</span><button className="btn btn-primary" type="button" onClick={addSite}>Add a site</button></div></div>
+    {editorOpen && <div className="site-editor-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) resetForm(); }}>
+      <section className="site-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="site-editor-title">
+        <header className="site-editor-header"><div><span className="eyebrow">Master data</span><h2 id="site-editor-title">{editingId ? `Edit site ${editingId}` : "Add a site"}</h2><p>Enter location, team, contact and generator details.</p></div><button className="site-editor-close" type="button" aria-label="Close site editor" disabled={busy} onClick={resetForm}>×</button></header>
+        <form className="site-master-form card card-pad" onSubmit={saveSite}>
       {groups.map((group) => <fieldset className="site-form-group form-section" key={group.title}><legend className="form-section-title">{group.title}</legend><div className="site-form-grid form-grid">
         {group.fields.map(([key, label]) => <label className={key === "address" || key === "access_notes" || key === "other_notes" ? "site-field field field-full" : "site-field field"} key={key}>{label}
           {key === "dg_meter_status" ? <select value={form[key]} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}><option value="unknown">N/A / Unknown</option><option value="working">Working</option><option value="faulty">Faulty</option><option value="replaced">Replaced</option><option value="missing">No meter</option><option value="suspected">Needs review</option></select>
@@ -110,8 +122,10 @@ export function SiteMasterManager({ notify, refreshToken }: { notify: Notify; re
       </div></fieldset>)}
       <p className="site-derived-note">Vehicle driver and supervisor are derived from the route vehicle assignment and are not duplicated in the site record.</p>
       <div className="site-form-actions"><button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Saving…" : editingId ? "Save site changes" : "Add site"}</button>{editingId && <button className="btn btn-secondary" type="button" onClick={resetForm}>Cancel edit</button>}</div>
-    </form>
-    <div className="site-list-heading section-toolbar"><div><h2>Master site records</h2><p>Search by Site ID, address, area, F1 zone, or Cluster Owner.</p></div><div className="site-list-controls table-controls"><label className="site-page-size field">Rows per page<select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={10}>10</option><option value={20}>20</option><option value={50}>50</option></select></label><label className="site-search field">Search sites<input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="e.g. 1260 or Gulshan" /></label></div></div>
+        </form>
+      </section>
+    </div>}
+    <div className="site-list-heading section-toolbar"><div className="site-list-controls table-controls"><label className="site-page-size field">Rows per page<select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={10}>10</option><option value={20}>20</option><option value={50}>50</option></select></label><label className="site-search field">Search sites<input aria-label="Search master site records by Site ID, address, area, F1 zone, or Cluster Owner" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="e.g. 1260 or Gulshan" /></label></div></div>
     <div className="table-wrap site-master-table"><table><thead><tr><th>Site ID</th><th>Address</th><th>Site area</th><th>F1 zone</th><th>Cluster Owner</th><th>Last updated</th><th>Updated by</th><th>Action</th></tr></thead><tbody>
       {sites.map((site) => <tr key={site.site_id}><td><strong>{site.site_id}</strong></td><td>{site.address || "—"}</td><td>{site.site_area || "—"}</td><td>{site.f1_zone || "—"}</td><td>{site.cluster_owner_name || "—"}</td><td>{site.updated_at ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Karachi" }).format(new Date(site.updated_at)) : "—"}</td><td>{site.updated_by ? updaterNames[site.updated_by] || "User" : "—"}</td><td><button className="edit-button" type="button" onClick={() => editSite(site)}>Edit</button></td></tr>)}
       {!sites.length && <tr><td colSpan={8}>{loading ? "Loading sites…" : query ? "No sites match your search." : "No sites yet. Import a workbook or add the first site above."}</td></tr>}
