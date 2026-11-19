@@ -161,12 +161,13 @@ function DashboardContent({ profile }: { profile: Profile }) {
                       <DetailRow icon="people" label="Security SO" value={contactValue(site.security_so_name, site.security_so_phone)} />
                     </div></section>
                     <section className="data-section"><h3 className="section-title"><AppIcon name="fuel" />Last fueling</h3><div className="last-fueling">
+                      <Value label="Fueling date" value={formatFuelingDate(current.fueling_date)} />
                       <Value label="Available fuel" value={formatValue(current.available_fuel, " L")} />
                       <Value label="Fuel poured" value={formatValue(current.fuel_poured, " L")} />
                       <Value label="Total fuel" value={formatValue(current.total_fuel, " L")} />
                       <Value label="DG meter status" value={meterLabel(current.dg_meter_status)} />
-                      <Value label="Previous reading" value={formatValue(current.previous_reading)} />
-                      <Value label="Current reading" value={formatValue(current.current_reading)} />
+                      <Value label="Previous reading" value={formatReading(current.previous_reading)} />
+                      <Value label="Current reading" value={formatReading(current.current_reading)} />
                       <Value label="Running hours" value={formatValue(current.running_hours, " h")} />
                       <Value label="Average consumption" value={formatValue(current.average_consumption, " L/h")} highlight />
                     </div></section>
@@ -237,6 +238,19 @@ function formatValue(value: unknown, suffix = "") {
   if (value === null || value === undefined || value === "") return "N/A";
   const numeric = Number(value);
   return Number.isFinite(numeric) ? `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(numeric)}${suffix}` : String(value);
+}
+function formatReading(value: unknown) {
+  if (value === null || value === undefined || value === "") return "N/A";
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 1, useGrouping: false }).format(numeric) : String(value);
+}
+function formatFuelingDate(value: unknown) {
+  if (value === null || value === undefined || value === "") return "N/A";
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return String(value);
+  const [, year, month, day] = match;
+  const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  return `${Number(day)}-${monthNames[Number(month) - 1]}-${year}`;
 }
 function contactValue(name: unknown, phone: unknown) {
   return [name, phone].filter(Boolean).join(" / ") || "Not provided";
