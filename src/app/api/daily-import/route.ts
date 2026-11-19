@@ -169,7 +169,7 @@ export async function POST(request: Request) {
     const validRows = rows.filter((row, index) => {
       const id = String(row.site_id);
       if (known.has(id)) return true;
-      errors.push({ row: latestBySite.get(id)?.rowNumber ?? index + 2, siteId: id, issue: "Site ID does not exist in Master Sites" });
+      warnings.push({ row: latestBySite.get(id)?.rowNumber ?? index + 2, siteId: id, issue: "Site ID does not exist in Master Sites; row skipped" });
       return false;
     });
 
