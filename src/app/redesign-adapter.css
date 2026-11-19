@@ -82,13 +82,20 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .admin-form input[type="file"] { width: 100%; min-height: 50px; padding: 11px; border-color: #d7e3de; background: #f7faf8; font-size: 12px; }
 .admin-form .file-drop { gap: 13px; }
 .admin-form .file-drop input[type="file"] { width: min(34%, 290px); min-height: 0; flex: 0 1 290px; padding: 0; border: 0; background: transparent; font-size: 10px; }
-.master-import-page .import-card { max-width: 900px; padding: 16px 18px; }
-.master-import-page .file-drop { min-height: 78px; padding: 12px 14px; flex-direction: row; align-items: center; }
+.master-import-page { display: grid; grid-template-columns: minmax(245px, .8fr) minmax(0, 2fr); align-items: start; gap: 12px; }
+.master-import-page .last-import { min-width: 0; margin: 0; padding: 11px 13px; }
+.master-import-page .last-import p { gap: 4px 10px; }
+.master-import-page .import-card { width: 100%; max-width: none; margin: 0 0 16px; padding: 14px 16px; }
+.master-import-page .file-drop { min-height: 58px; padding: 9px 11px; flex-direction: row; align-items: center; }
 .master-import-page .file-icon { width: 34px; height: 34px; }
 .master-import-page .file-icon svg { width: 22px; height: 22px; }
 .master-import-page .file-copy { display: grid; gap: 3px; }
 .master-import-page .file-copy strong { margin: 0; }
+.master-import-page .admin-form .file-drop input[type="file"] { width: min(290px, 37%); min-height: 36px; flex: 0 1 290px; font-size: 11px; }
+.master-import-page .file-drop input[type="file"]::file-selector-button { min-height: 34px; margin-right: 9px; padding: 0 12px; border: 1px solid #b8d9cc; border-radius: 8px; background: #e8f6ef; color: #08785a; font: inherit; font-weight: 700; cursor: pointer; }
+.master-import-page .file-drop input[type="file"]::file-selector-button:hover { border-color: #8fc8b3; background: #d9f0e5; }
 .master-import-page .admin-form .button-row { margin-top: 0; }
+.master-import-page .preview-box { grid-column: 1 / -1; margin-top: 0; }
 .selected-file { margin: -3px 0 0; color: var(--muted); font-size: 11px; }
 .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .button-row .primary-button, .preview-box > .primary-button { min-height: 40px; }
@@ -224,7 +231,9 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
   .admin-form .file-drop { align-items: flex-start; flex-wrap: wrap; }
   .admin-form .file-drop input[type="file"] { width: 100%; max-width: 100%; flex-basis: 100%; }
   .site-manager-heading, .site-list-heading { align-items: flex-start; flex-direction: column; }
+  .master-import-page { grid-template-columns: minmax(0, 1fr); }
   .master-import-page .import-card { max-width: 100%; }
+  .master-import-page .admin-form .file-drop input[type="file"] { width: 100%; max-width: 100%; flex-basis: 100%; }
   .site-manager-actions { width: 100%; justify-content: space-between; }
   .site-list-heading { align-items: flex-end; }
   .site-editor-backdrop { padding: 12px; }
