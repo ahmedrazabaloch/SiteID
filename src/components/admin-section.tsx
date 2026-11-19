@@ -36,10 +36,6 @@ function ImportPanel({ kind, notify, onCommitted }: { kind: "daily" | "master"; 
   const [auditLoading, setAuditLoading] = useState(true);
   const [auditFailed, setAuditFailed] = useState(false);
   const endpoint = kind === "daily" ? "/api/daily-import" : "/api/master-import";
-  const title = kind === "daily" ? "Daily fueling update" : "Master sites";
-  const subtitle = kind === "daily"
-    ? "Upload the latest fueling workbook. Import Master Sites first so each fueling row can be matched to a site. The newest dated row replaces the current record for each site."
-    : "Import site locations, teams, routes and contact details. Blank cells keep previously saved values.";
 
   const loadLastImport = useCallback(async () => {
     try {
@@ -96,7 +92,6 @@ function ImportPanel({ kind, notify, onCommitted }: { kind: "daily" | "master"; 
   }
 
   return <section className={`admin-placeholder import-page ${kind}-import-page`}>
-    <div className="page-heading"><div className="heading-copy"><div className="eyebrow">{kind === "daily" ? "Fuel reporting" : "Master data"}</div><h1>{title}</h1><p>{subtitle}</p></div></div>
     <div className="import-audit last-import" aria-live="polite"><span className="import-audit-mark last-import-icon" aria-hidden="true">↻</span><div><strong>{auditLoading ? "Loading last update…" : auditFailed ? "Last update details unavailable" : lastImport ? "Last updated" : "No imports recorded yet"}</strong>{lastImport && !auditFailed && <p><time dateTime={lastImport.imported_at}>{formatImportDate(lastImport.imported_at)}</time><span>by <b>{lastImport.full_name}</b></span><span>{lastImport.imported_rows.toLocaleString("en-US")} sites</span><span className="import-audit-file">{lastImport.file_name}</span></p>}</div></div>
     <div className="admin-form card import-card">
       <div className="field"><label htmlFor={`${kind}-workbook`}>Excel workbook (.xlsx)</label><label className="file-drop" htmlFor={`${kind}-workbook`}><span className="file-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6m-3-3 3 3 3-3"/></svg></span><span className="file-copy"><strong>{file?.name || `Choose a ${kind === "daily" ? "daily fueling" : "master sites"} workbook`}</strong><span>Accepted format: .xlsx · Review the preview before importing.</span></span><input id={`${kind}-workbook`} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { setFile(event.target.files?.[0] ?? null); setPreview(null); }} /></label></div>
@@ -179,7 +174,6 @@ function VehiclePanel({ notify }: { notify: Notify }) {
   }
 
   return <section className="admin-placeholder vehicle-page">
-    <div className="page-heading"><div className="heading-copy"><div className="eyebrow">Fleet assignments</div><h1>Route vehicles</h1><p>Manage vehicle, zone, duty, driver and supervisor assignments. Day and Night duties can be assigned separately.</p></div><div className="heading-actions"><span className="pill pill-blue">{vehicles.length} assignments</span></div></div>
     <form className="admin-grid vehicle-form form-grid card card-pad" onSubmit={save}>
       <label className="field">Duty<select value={form.field_shift} onChange={(event) => setForm((current) => ({ ...current, field_shift: event.target.value as "day" | "night" }))}><option value="day">Day</option><option value="night">Night</option></select></label>
       <label className="field">Vehicle number<input value={form.vehicle_number} onChange={(event) => setForm((current) => ({ ...current, vehicle_number: event.target.value }))} required /></label>
@@ -275,7 +269,6 @@ function UserManagementPanel({ notify }: { notify: Notify }) {
   }
 
   return <section className="admin-placeholder user-management-page">
-    <div className="page-heading"><div className="heading-copy"><div className="eyebrow">Administration</div><h1>Users & access</h1><p>Create and manage staff accounts. Each account uses a unique 11-digit ID; the initial password is shown only during account creation.</p></div></div>
     <form className="admin-grid user-create-form form-grid card card-pad" onSubmit={createAccount}>
       <label className="field">ID number<input inputMode="numeric" autoComplete="off" maxLength={11} placeholder="03139090700" value={form.username} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value.replace(/\D/g, "").slice(0, 11) }))} required /></label>
       <label className="field">Full name<input autoComplete="off" maxLength={80} value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} required /></label>

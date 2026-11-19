@@ -152,6 +152,7 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .site-pagination .pagination span { color: var(--muted); font-size: 11px; white-space: nowrap; }
 .site-mobile-records { display: none; }
 .profile-layout { grid-template-columns: minmax(260px, .75fr) minmax(0, 1.25fr); }
+.profile-page-actions { display: flex; justify-content: flex-end; margin: 0 0 12px; }
 .profile-summary, .profile-form-card { padding: 19px; }
 .profile-identity { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line-2); margin-bottom: 8px; }
 .profile-avatar-large { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: var(--mint); color: var(--emerald); font-size: 18px; font-weight: 800; }

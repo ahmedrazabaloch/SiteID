@@ -141,7 +141,6 @@ function DashboardContent({ profile }: { profile: Profile }) {
         </header>
         <div className="content">{section === "profile" ? <ProfilePanel profile={{ ...profile, name: displayName }} onNameSaved={setDisplayName} onSignOut={signOut} /> : section === "lookup" ? (
             <>
-              <div className="page-heading"><div className="heading-copy"><div className="eyebrow">Site support</div><h1>Complaint lookup</h1><p>Find a site and prepare a fuel request for your team.</p></div></div>
               <div className="card search-card"><form className="lookup-form search-grid" onSubmit={lookup}>
                 <label>Site ID<input value={siteId} onChange={(event) => setSiteId(event.target.value)} inputMode="numeric" placeholder="e.g. 112" required /></label>
                 <label>Requested fuel (L)<input value={litres} onChange={(event) => setLitres(event.target.value)} inputMode="decimal" placeholder="e.g. 120" /></label>
@@ -234,7 +233,7 @@ function ProfilePanel({ profile, onNameSaved, onSignOut }: { profile: Profile; o
   }
 
   return <section className="profile-page">
-    <div className="page-heading"><div className="heading-copy"><div className="eyebrow">Account settings</div><h1>My profile</h1><p>Manage your display name and password for your Fuel Ops account.</p></div><div className="heading-actions"><button className="btn btn-secondary" onClick={onSignOut}>Sign out</button></div></div>
+    <div className="profile-page-actions"><button className="btn btn-secondary" onClick={onSignOut}>Sign out</button></div>
     <div className="profile-layout">
       <section className="card profile-summary"><div className="profile-identity"><span className="profile-avatar-large">{profile.name.trim().slice(0, 1).toUpperCase() || "U"}</span><div><h2>{profile.name}</h2><p>{profile.role.replaceAll("_", " ")} · Fuel Ops</p></div></div><div className="profile-kv"><span>Login ID</span><strong>{profile.email}</strong></div><div className="profile-kv"><span>Account role</span><strong>{profile.role.replaceAll("_", " ")}</strong></div><div className="profile-kv"><span>Account status</span><strong><span className="pill pill-green">Active</span></strong></div><div className="security-hint">Your permissions are managed through your assigned account role.</div></section>
       <div className="profile-settings-stack">
