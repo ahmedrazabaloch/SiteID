@@ -45,6 +45,13 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .contact-detail-grid .info-icon { width: 23px; height: 23px; }
 .contact-detail-grid .info-label { line-height: 1.3; }
 .contact-detail-grid .info-value { font-size: 11px; }
+.crew-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid var(--line-2); }
+.crew-detail-grid .detail-row.info-row { min-width: 0; grid-template-columns: 25px minmax(0, 1fr); gap: 7px; min-height: 0; padding: 12px 10px; border: 0; }
+.crew-detail-grid .detail-row.info-row:not(:last-child) { border-right: 1px solid var(--line-2); }
+.crew-detail-grid .info-icon { width: 23px; height: 23px; }
+.crew-detail-grid .info-label { line-height: 1.3; }
+.crew-detail-grid .info-value { font-size: 11px; }
+.crew-detail-grid .info-value strong { color: var(--ink); font-weight: 800; }
 .fuel-card-body { padding: 13px 20px 18px; }
 .last-fueling .reading-row { min-height: 39px; padding: 8px 2px; }
 .last-fueling .data-value { align-items: center; }
@@ -238,4 +245,7 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
   .contact-grid-three, .contact-grid-two { grid-template-columns: minmax(0, 1fr); }
   .contact-detail-grid .detail-row.info-row { padding-inline: 0; }
   .contact-detail-grid .detail-row.info-row:not(:last-child) { border-right: 0; border-bottom: 1px solid var(--line-2); }
+  .crew-detail-grid { grid-template-columns: minmax(0, 1fr); }
+  .crew-detail-grid .detail-row.info-row { padding-inline: 0; }
+  .crew-detail-grid .detail-row.info-row:not(:last-child) { border-right: 0; border-bottom: 1px solid var(--line-2); }
 }

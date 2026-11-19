@@ -96,12 +96,6 @@ function DashboardContent({ profile }: { profile: Profile }) {
   const teamFor = (shift: "day" | "night", vehicle: Record<string, unknown> | undefined) =>
     String(site[shift === "day" ? "day_team" : "night_team"] || vehicle?.team || vehicle?.route || "Not assigned");
   const route = routeFor(targetShift, activeVehicle);
-  const crewLabel = (vehicle: Record<string, unknown> | undefined, shift: "day" | "night") => {
-    const savedTeam = String(site[shift === "day" ? "day_team" : "night_team"] ?? "").trim();
-    if (!vehicle) return savedTeam ? `Team: ${savedTeam} · Driver: Not assigned · Supervisor: Not assigned` : shift === "night" && f1Zone === "northkarachi" ? "No Night vehicle assigned" : "Not assigned";
-    const team = String(vehicle.team || vehicle.route || savedTeam).trim();
-    return [team ? `Team: ${team}` : "", `Driver: ${String(vehicle.driver || "Not set")}`, `Supervisor: ${String(vehicle.fueler_supervisor || "Not set")}`].filter(Boolean).join(" · ");
-  };
   const dayTeam = teamFor("day", dayVehicle);
   const nightTeam = teamFor("night", nightVehicle);
   const message = result
@@ -164,8 +158,10 @@ function DashboardContent({ profile }: { profile: Profile }) {
                     <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="site" />Site details</div><div className="card-subtitle">Location, field crews and client contacts</div></div><span className="pill pill-gray site-id-badge">ID {String(site.site_id ?? "")}</span></div><div className="site-detail-list info-list">
                       <DetailRow icon="pin" label="Site address" value={[site.address, site.site_area].filter(Boolean).join(", ") || "Address not set"} />
                       <DetailRow icon="route" label="F1 zone" value={String(site.f1_zone ?? "Not set")} />
-                      <DetailRow icon="vehicle" label="Day vehicle crew" value={crewLabel(dayVehicle, "day")} />
-                      <DetailRow icon="vehicle" label="Night vehicle crew" value={crewLabel(nightVehicle, "night")} />
+                      <div className="crew-detail-grid">
+                        <CrewDetail shift="Day" vehicle={dayVehicle} fallback="Not assigned" />
+                        <CrewDetail shift="Night" vehicle={nightVehicle} fallback={f1Zone === "northkarachi" ? "No Night vehicle assigned" : "Not assigned"} />
+                      </div>
                       <div className="contact-detail-grid contact-grid-three">
                         <DetailRow icon="user" label="Cluster Owner" value={contactValue(site.cluster_owner_name, site.cluster_owner_phone)} />
                         <DetailRow icon="user" label="Night On-Caller" value={contactValue(site.night_on_caller_name, site.night_on_caller_phone)} />
@@ -293,6 +289,12 @@ function meterLabel(value: unknown) {
 
 function DetailRow({ icon, label, value }: { icon: "pin" | "route" | "people" | "user" | "vehicle"; label: string; value: string }) {
   return <div className="detail-row info-row"><span className="info-icon"><AppIcon name={icon} /></span><div><span className="info-label">{label}</span><span className="info-value">{value || "Not provided"}</span></div></div>;
+}
+
+function CrewDetail({ shift, vehicle, fallback }: { shift: "Day" | "Night"; vehicle?: Record<string, unknown>; fallback: string }) {
+  return <div className="detail-row info-row crew-detail"><span className="info-icon"><AppIcon name="vehicle" /></span><div><span className="info-label">{shift} Vehicle Crew</span>{vehicle
+    ? <span className="info-value">Driver: <strong>{String(vehicle.driver || "Not set")}</strong> · Supervisor: <strong>{String(vehicle.fueler_supervisor || "Not set")}</strong></span>
+    : <span className="info-value">{fallback}</span>}</div></div>;
 }
 
 function DropIcon() { return <svg viewBox="0 0 32 40" aria-hidden="true"><path d="M16 1.8C13 8.2 3.4 17.6 3.4 25.2A12.6 12.6 0 0 0 28.6 25C28.6 17.6 19 8.2 16 1.8Z" fill="currentColor"/><path d="M10.2 26a6.1 6.1 0 0 0 6.1 6.1" fill="none" stroke="#123b36" strokeWidth="2.3" strokeLinecap="round"/></svg>; }
