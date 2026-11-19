@@ -65,11 +65,16 @@ function DashboardContent({ profile }: { profile: Profile }) {
   const f1Zone = normalizeArea(site.f1_zone);
   function assignedVehicle(shift: "day" | "night") {
     const savedRoute = String(site[shift === "day" ? "day_route" : "night_route"] ?? "");
-    const zoneAliases = f1Zone === "northkarachi" && shift === "day" ? ["northnazimabad"] : [f1Zone];
-    return result?.vehicles?.find((vehicle) => {
-      if (vehicle.field_shift !== shift) return false;
+    const shiftVehicles = result?.vehicles?.filter((vehicle) => vehicle.field_shift === shift) ?? [];
+    if (f1Zone === "northkarachi" && shift === "day") {
+      const northKarachiAssignment = shiftVehicles.find((vehicle) => normalizeArea(vehicle.route) === "northkarachi");
+      if (northKarachiAssignment) return northKarachiAssignment;
+      const northNazimabadAssignment = shiftVehicles.find((vehicle) => String(vehicle.route ?? "").split("&").map(normalizeArea).includes("northnazimabad"));
+      if (northNazimabadAssignment) return northNazimabadAssignment;
+    }
+    return shiftVehicles.find((vehicle) => {
       const assignedAreas = String(vehicle.route ?? "").split("&").map(normalizeArea);
-      return assignedAreas.some((area) => zoneAliases.includes(area)) || normalizeArea(vehicle.route) === normalizeArea(savedRoute) || assignedAreas.includes(siteArea);
+      return (f1Zone && assignedAreas.includes(f1Zone)) || normalizeArea(vehicle.route) === normalizeArea(savedRoute) || assignedAreas.includes(siteArea);
     });
   }
   const dayVehicle = assignedVehicle("day");
