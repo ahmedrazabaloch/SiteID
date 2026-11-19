@@ -82,7 +82,7 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .admin-form input[type="file"] { width: 100%; min-height: 50px; padding: 11px; border-color: #d7e3de; background: #f7faf8; font-size: 12px; }
 .admin-form .file-drop { gap: 13px; }
 .admin-form .file-drop input[type="file"] { width: min(34%, 290px); min-height: 0; flex: 0 1 290px; padding: 0; border: 0; background: transparent; font-size: 10px; }
-.master-import-page { display: grid; grid-template-columns: minmax(245px, .8fr) minmax(0, 2fr); align-items: start; gap: 12px; }
+.master-import-page { display: block; }
 .master-import-page .last-import { min-width: 0; margin: 0; padding: 11px 13px; }
 .master-import-page .last-import p { gap: 4px 10px; }
 .master-import-page .import-card { width: 100%; max-width: none; margin: 0 0 16px; padding: 14px 16px; }
@@ -94,8 +94,9 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .master-import-page .admin-form .file-drop input[type="file"] { width: min(290px, 37%); min-height: 36px; flex: 0 1 290px; font-size: 11px; }
 .master-import-page .file-drop input[type="file"]::file-selector-button { min-height: 34px; margin-right: 9px; padding: 0 12px; border: 1px solid #b8d9cc; border-radius: 8px; background: #e8f6ef; color: #08785a; font: inherit; font-weight: 700; cursor: pointer; }
 .master-import-page .file-drop input[type="file"]::file-selector-button:hover { border-color: #8fc8b3; background: #d9f0e5; }
-.master-import-page .admin-form .button-row { margin-top: 0; }
-.master-import-page .preview-box { grid-column: 1 / -1; margin-top: 0; }
+.master-import-page .admin-form .button-row { justify-content: space-between; margin-top: 0; }
+.master-import-page .button-row .last-import { max-width: 70%; }
+.master-import-page .preview-box { margin-top: 0; }
 .selected-file { margin: -3px 0 0; color: var(--muted); font-size: 11px; }
 .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .button-row .primary-button, .preview-box > .primary-button { min-height: 40px; }
@@ -137,6 +138,7 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .user-security-note { margin: 12px 0 0; color: var(--muted); font-size: 11px; }
 .site-master-manager { max-width: 1200px; margin-top: 27px; padding-top: 23px; border-top: 1px solid var(--line); }
 .site-manager-heading { margin-bottom: 16px; }
+.site-manager-top-actions { display: flex; justify-content: flex-end; margin: 0 0 12px; }
 .site-manager-actions { display: flex; align-items: center; gap: 10px; }
 .site-manager-heading p, .site-list-heading p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .site-master-form { display: grid; gap: 0; }
@@ -149,8 +151,9 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .site-editor-header p { margin: 0; color: var(--muted); font-size: 12px; }
 .site-editor-close { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--muted); font-size: 22px; line-height: 1; }
 .site-editor-close:hover { background: #f3f8f6; color: var(--ink); }
-.site-list-heading { justify-content: flex-end; margin: 6px 0 11px; }
-.site-list-controls { margin-left: auto; }
+.site-list-heading { align-items: center; margin: 6px 0 11px; }
+.site-list-controls { margin: 0; }
+.site-list-title { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
 .site-form-group { min-width: 0; margin: 0; }
 .site-form-group legend { padding: 0 8px; }
 .site-form-grid { align-items: start; gap: 13px; }
@@ -158,10 +161,10 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .site-field input, .site-field textarea, .site-field select { min-height: 40px; padding: 9px 11px; font-size: 12px; }
 .site-derived-note { margin: 15px 0 12px; padding: 11px 13px; border-radius: 9px; background: var(--mint-2); color: var(--muted); font-size: 10px; line-height: 1.5; }
 .site-form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.site-list-heading { margin: 26px 0 11px; }
+.site-list-heading { margin: 6px 0 11px; }
 .site-list-controls { align-items: end; }
 .site-page-size { width: 120px; }
-.site-search { width: min(280px, 35vw); }
+.site-search { width: min(320px, 35vw); }
 .site-list-controls select, .site-list-controls input { min-height: 39px; font-size: 12px; }
 .site-master-table { overflow: auto; }
 .site-master-table table { min-width: 880px; }
@@ -231,11 +234,13 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
   .admin-form .file-drop { align-items: flex-start; flex-wrap: wrap; }
   .admin-form .file-drop input[type="file"] { width: 100%; max-width: 100%; flex-basis: 100%; }
   .site-manager-heading, .site-list-heading { align-items: flex-start; flex-direction: column; }
-  .master-import-page { grid-template-columns: minmax(0, 1fr); }
   .master-import-page .import-card { max-width: 100%; }
+  .master-import-page .button-row { align-items: stretch; flex-direction: column; }
+  .master-import-page .button-row .last-import { width: 100%; max-width: none; }
   .master-import-page .admin-form .file-drop input[type="file"] { width: 100%; max-width: 100%; flex-basis: 100%; }
   .site-manager-actions { width: 100%; justify-content: space-between; }
-  .site-list-heading { align-items: flex-end; }
+  .site-list-heading { align-items: flex-start; }
+  .site-list-title { align-self: flex-end; }
   .site-editor-backdrop { padding: 12px; }
   .site-editor-dialog { max-height: 94vh; }
   .site-editor-header { padding: 16px; }
@@ -262,4 +267,10 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
   .crew-detail-grid { grid-template-columns: minmax(0, 1fr); }
   .crew-detail-grid .detail-row.info-row { padding-inline: 0; }
   .crew-detail-grid .detail-row.info-row:not(:last-child) { border-right: 0; border-bottom: 1px solid var(--line-2); }
+}
+
+@media (max-width: 640px) {
+  .site-list-controls { align-items: end; }
+  .site-search { min-width: 0; }
+  .site-list-title { align-self: flex-start; white-space: normal; }
 }
