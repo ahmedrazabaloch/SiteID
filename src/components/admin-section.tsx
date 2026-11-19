@@ -3,29 +3,66 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError, ToastKind, useToast } from "@/components/toast-provider";
+import { SiteMasterManager } from "@/components/site-master-manager";
 
 type Section = "daily" | "master" | "vehicles" | "roster";
-type ImportPreview = { fileName?: string; rowCount?: number; errors?: { row: number; siteId: string; issue: string }[]; sample?: Record<string, unknown>[]; error?: string; imported?: number };
+type ImportPreview = { fileName?: string; rowCount?: number; errors?: { row: number; siteId: string; issue: string }[]; warnings?: { row: number; siteId: string; issue: string }[]; sample?: Record<string, unknown>[]; error?: string; imported?: number };
+type ImportAudit = { imported_at: string; file_name: string; imported_rows: number; imported_by: string | null; full_name: string };
 type VehicleRow = { route: string; field_shift: "day" | "night"; vehicle_number: string; driver: string; fueler_supervisor: string; team: string; notes: string; updated_at: string };
 type ManagedUser = { id: string; username: string | null; email: string | null; phone: string | null; full_name: string; role: "super_admin" | "admin" | "operator"; operator_shift: "day" | "evening" | "night"; is_active: boolean; created_at: string };
 type Notify = (message: string, kind?: ToastKind) => void;
 
 export function AdminSection({ section }: { section: Section }) {
   const notify = useToast();
-  if (section === "daily" || section === "master") return <ImportPanel kind={section} notify={notify} />;
+  if (section === "master") return <MasterSitesPanel notify={notify} />;
+  if (section === "daily") return <ImportPanel key={section} kind={section} notify={notify} />;
   if (section === "vehicles") return <VehiclePanel notify={notify} />;
   return <RosterPanel notify={notify} />;
 }
 
-function ImportPanel({ kind, notify }: { kind: "daily" | "master"; notify: Notify }) {
+function MasterSitesPanel({ notify }: { notify: Notify }) {
+  const [refreshToken, setRefreshToken] = useState(0);
+  return <>
+    <ImportPanel kind="master" notify={notify} onCommitted={() => setRefreshToken((value) => value + 1)} />
+    <SiteMasterManager notify={notify} refreshToken={refreshToken} />
+  </>;
+}
+
+function ImportPanel({ kind, notify, onCommitted }: { kind: "daily" | "master"; notify: Notify; onCommitted?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [busy, setBusy] = useState(false);
+  const [lastImport, setLastImport] = useState<ImportAudit | null>(null);
+  const [auditLoading, setAuditLoading] = useState(true);
+  const [auditFailed, setAuditFailed] = useState(false);
   const endpoint = kind === "daily" ? "/api/daily-import" : "/api/master-import";
   const title = kind === "daily" ? "Daily fueling update" : "Master sites";
   const subtitle = kind === "daily"
     ? "Upload the latest fueling workbook. Import Master Sites first so each fueling row can be matched to a site. The newest dated row replaces the current record for each site."
     : "Import site locations, teams, routes and contact details. Blank cells keep previously saved values.";
+
+  const loadLastImport = useCallback(async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("import_runs").select("imported_at,file_name,imported_rows,imported_by").eq("import_type", kind).order("imported_at", { ascending: false }).limit(1).maybeSingle();
+      if (error) throw error;
+      if (!data) { setLastImport(null); setAuditFailed(false); return; }
+      let fullName = "Unknown user";
+      if (data.imported_by) {
+        const { data: profile, error: profileError } = await supabase.from("profiles").select("full_name").eq("id", data.imported_by).maybeSingle();
+        if (profileError) throw profileError;
+        fullName = profile?.full_name || "Name not set";
+      }
+      setLastImport({ ...data, full_name: fullName });
+      setAuditFailed(false);
+    } catch (cause) {
+      setAuditFailed(true);
+      notify(friendlyError(cause, "Could not load the last import details."), "warning");
+    } finally { setAuditLoading(false); }
+  }, [kind, notify]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Load the most recent import when this panel opens.
+  useEffect(() => { void loadLastImport(); }, [loadLastImport]);
 
   async function send(mode: "preview" | "commit") {
     if (!file) { notify("Choose an Excel workbook first.", "warning"); return; }
@@ -42,8 +79,12 @@ function ImportPanel({ kind, notify }: { kind: "daily" | "master"; notify: Notif
       if (mode === "commit") {
         setFile(null);
         notify(`${body.imported ?? 0} site records imported successfully.`, "success");
+        await loadLastImport();
+        onCommitted?.();
       } else if (body.errors?.length) {
         notify(`${body.errors.length} row${body.errors.length === 1 ? " needs" : "s need"} attention. Review the preview below.`, "warning");
+      } else if (body.warnings?.length) {
+        notify(`${body.rowCount ?? 0} records are ready; ${body.warnings.length} duplicate row${body.warnings.length === 1 ? " was" : "s were"} skipped using the first row.`, "warning");
       } else {
         notify(`${body.rowCount ?? 0} records are ready to import.`, "success");
       }
@@ -56,6 +97,7 @@ function ImportPanel({ kind, notify }: { kind: "daily" | "master"; notify: Notif
 
   return <section className="admin-placeholder">
     <h1>{title}</h1><p className="muted">{subtitle}</p>
+    <div className="import-audit" aria-live="polite"><span className="import-audit-mark" aria-hidden="true">↻</span><div><strong>{auditLoading ? "Loading last update…" : auditFailed ? "Last update details unavailable" : lastImport ? "Last updated" : "No imports recorded yet"}</strong>{lastImport && !auditFailed && <p><time dateTime={lastImport.imported_at}>{formatImportDate(lastImport.imported_at)}</time><span>by <b>{lastImport.full_name}</b></span><span>{lastImport.imported_rows.toLocaleString("en-US")} sites</span><span className="import-audit-file">{lastImport.file_name}</span></p>}</div></div>
     <div className="admin-form">
       <label>Excel workbook (.xlsx)<input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { setFile(event.target.files?.[0] ?? null); setPreview(null); }} /></label>
       {file && <p className="selected-file">Selected: <strong>{file.name}</strong></p>}
@@ -63,8 +105,9 @@ function ImportPanel({ kind, notify }: { kind: "daily" | "master"; notify: Notif
     </div>
     {preview && !preview.error && <div className="preview-box" aria-live="polite">
       <div className="preview-title"><strong>{preview.fileName}</strong><span className="preview-count">{preview.rowCount ?? 0} records ready</span></div>
-      <p>{preview.errors?.length ?? 0} issues found</p>
+      <p>{preview.errors?.length ?? 0} issues found · {preview.warnings?.length ?? 0} duplicate rows skipped</p>
       {!!preview.errors?.length && <><ul className="preview-errors">{preview.errors.slice(0, 8).map((error, index) => <li key={index}>Row {error.row} · Site {error.siteId}: {error.issue}</li>)}</ul>{preview.errors.length > 8 && <p className="muted">Showing 8 of {preview.errors.length} issues.</p>}</>}
+      {!!preview.warnings?.length && <><ul className="preview-warnings">{preview.warnings.slice(0, 8).map((warning, index) => <li key={index}>Row {warning.row} · Site {warning.siteId}: {warning.issue}</li>)}</ul>{preview.warnings.length > 8 && <p className="muted">Showing 8 of {preview.warnings.length} duplicate rows.</p>}</>}
       {preview.sample?.length ? <div className="table-wrap preview-table"><table><thead><tr>{Object.keys(preview.sample[0]).map((column) => <th key={column}>{column.replaceAll("_", " ")}</th>)}</tr></thead><tbody>{preview.sample.map((row, index) => <tr key={index}>{Object.keys(preview.sample?.[0] ?? {}).map((column) => <td key={column}>{String(row[column] ?? "N/A")}</td>)}</tr>)}</tbody></table></div> : null}
       {preview.rowCount && !preview.errors?.length && preview.imported === undefined && <button className="primary-button" type="button" disabled={busy} onClick={() => send("commit")}>{busy ? "Importing…" : "Confirm and import"}</button>}
       {preview.imported !== undefined && <p className="success-text">{preview.imported} site records imported. Latest values are now saved.</p>}
@@ -72,10 +115,16 @@ function ImportPanel({ kind, notify }: { kind: "daily" | "master"; notify: Notif
   </section>;
 }
 
+function formatImportDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Karachi" }).format(date);
+}
+
 function VehiclePanel({ notify }: { notify: Notify }) {
   const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
   const [editing, setEditing] = useState<{ route: string; field_shift: "day" | "night" } | null>(null);
-  const [form, setForm] = useState({ route: "", field_shift: "day" as "day" | "night", vehicle_number: "", driver: "", fueler_supervisor: "" });
+  const [form, setForm] = useState({ route: "", field_shift: "day" as "day" | "night", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" });
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -100,7 +149,7 @@ function VehiclePanel({ notify }: { notify: Notify }) {
       const row = {
         route: form.route.trim(),
         field_shift: form.field_shift,
-        team: "",
+        team: form.team.trim(),
         vehicle_number: form.vehicle_number.trim(),
         driver: form.driver.trim(),
         fueler_supervisor: form.fueler_supervisor.trim(),
@@ -118,7 +167,7 @@ function VehiclePanel({ notify }: { notify: Notify }) {
         notify("Vehicle assignment added.", "success");
       }
       setEditing(null);
-      setForm({ route: "", field_shift: "day", vehicle_number: "", driver: "", fueler_supervisor: "" });
+      setForm({ route: "", field_shift: "day", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" });
       await loadVehicles();
     } catch (cause) {
       notify(friendlyError(cause, "Could not save vehicle assignment."), "error");
@@ -126,7 +175,7 @@ function VehiclePanel({ notify }: { notify: Notify }) {
   }
   function editVehicle(vehicle: VehicleRow) {
     setEditing({ route: vehicle.route, field_shift: vehicle.field_shift });
-    setForm({ route: vehicle.route, field_shift: vehicle.field_shift, vehicle_number: vehicle.vehicle_number, driver: vehicle.driver, fueler_supervisor: vehicle.fueler_supervisor });
+    setForm({ route: vehicle.route, field_shift: vehicle.field_shift, team: vehicle.team, vehicle_number: vehicle.vehicle_number, driver: vehicle.driver, fueler_supervisor: vehicle.fueler_supervisor });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -135,14 +184,15 @@ function VehiclePanel({ notify }: { notify: Notify }) {
       <label>Duty<select value={form.field_shift} onChange={(event) => setForm((current) => ({ ...current, field_shift: event.target.value as "day" | "night" }))}><option value="day">Day</option><option value="night">Night</option></select></label>
       <label>Vehicle number<input value={form.vehicle_number} onChange={(event) => setForm((current) => ({ ...current, vehicle_number: event.target.value }))} required /></label>
       <label>Zone area<input value={form.route} onChange={(event) => setForm((current) => ({ ...current, route: event.target.value }))} required /></label>
+      <label>FormulaOne team name (optional)<input value={form.team} onChange={(event) => setForm((current) => ({ ...current, team: event.target.value }))} placeholder="Defaults to zone area" /></label>
       <label>Driver<input value={form.driver} onChange={(event) => setForm((current) => ({ ...current, driver: event.target.value }))} /></label>
       <label>Supervisor<input value={form.fueler_supervisor} onChange={(event) => setForm((current) => ({ ...current, fueler_supervisor: event.target.value }))} /></label>
-      <div className="vehicle-form-actions"><button className="primary-button" type="submit" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Add vehicle"}</button>{editing && <button className="secondary-button" type="button" onClick={() => { setEditing(null); setForm({ route: "", field_shift: "day", vehicle_number: "", driver: "", fueler_supervisor: "" }); }}>Cancel edit</button>}</div>
+      <div className="vehicle-form-actions"><button className="primary-button" type="submit" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Add vehicle"}</button>{editing && <button className="secondary-button" type="button" onClick={() => { setEditing(null); setForm({ route: "", field_shift: "day", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" }); }}>Cancel edit</button>}</div>
     </form>
     <div className="vehicle-list-heading"><h2>Vehicle assignments</h2><span>{vehicles.length} total</span></div>
-    <div className="table-wrap vehicle-table"><table><thead><tr><th>Duty</th><th>Vehicle number</th><th>Zone area</th><th>Driver</th><th>Supervisor</th><th><span className="visually-hidden">Actions</span></th></tr></thead><tbody>
-      {vehicles.map((vehicle) => <tr key={`${vehicle.route}-${vehicle.field_shift}`}><td><span className={`duty-tag duty-${vehicle.field_shift}`}>{vehicle.field_shift === "day" ? "Day" : "Night"}</span></td><td><strong>{vehicle.vehicle_number}</strong></td><td>{vehicle.route}</td><td>{vehicle.driver || "—"}</td><td>{vehicle.fueler_supervisor || "—"}</td><td><button className="edit-button" type="button" onClick={() => editVehicle(vehicle)}>Edit</button></td></tr>)}
-      {!vehicles.length && <tr><td colSpan={6}>{loading ? "Loading vehicle assignments…" : "No vehicle assignments yet. Add the first vehicle above."}</td></tr>}
+    <div className="table-wrap vehicle-table"><table><thead><tr><th>Duty</th><th>FormulaOne team</th><th>Vehicle number</th><th>Zone area</th><th>Driver</th><th>Supervisor</th><th><span className="visually-hidden">Actions</span></th></tr></thead><tbody>
+      {vehicles.map((vehicle) => <tr key={`${vehicle.route}-${vehicle.field_shift}`}><td><span className={`duty-tag duty-${vehicle.field_shift}`}>{vehicle.field_shift === "day" ? "Day" : "Night"}</span></td><td>{vehicle.team || vehicle.route}</td><td><strong>{vehicle.vehicle_number}</strong></td><td>{vehicle.route}</td><td>{vehicle.driver || "—"}</td><td>{vehicle.fueler_supervisor || "—"}</td><td><button className="edit-button" type="button" onClick={() => editVehicle(vehicle)}>Edit</button></td></tr>)}
+      {!vehicles.length && <tr><td colSpan={7}>{loading ? "Loading vehicle assignments…" : "No vehicle assignments yet. Add the first vehicle above."}</td></tr>}
     </tbody></table></div>
   </section>;
 }

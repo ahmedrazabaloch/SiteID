@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:status": "supabase migration list --remote",
     "db:baseline": "supabase migration repair --status applied 20261114000000 --remote",
-    "db:push": "supabase db push --remote"
+    "db:push": "supabase db push --remote",
+    "import:master": "node scripts/import-master-workbook.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

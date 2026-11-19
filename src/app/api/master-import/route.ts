@@ -21,6 +21,7 @@ const fields: Record<string, string[]> = {
   site_id: ["site id", "site code", "siteid"],
   address: ["address"],
   site_area: ["site area", "area"],
+  f1_zone: ["f1 zone", "zone f1", "f1zone"],
   day_team: ["day team"],
   day_route: ["day route", "route day"],
   day_fueler: ["day fueler supervisor", "day fueler", "day supervisor"],
@@ -35,7 +36,7 @@ const fields: Record<string, string[]> = {
   night_on_caller_phone: ["night on caller phone", "night on caller number", "night on caller contact"],
   ie_lead_name: ["i engineering team lead", "ie team lead", "ie lead", "ie tgl"],
   ie_lead_phone: ["i engineering team lead phone", "ie team lead phone", "ie lead phone"],
-  zong_lead_name: ["zong team lead", "zong lead"],
+  zong_lead_name: ["zong team lead", "zong lead", "cmpak tgl"],
   zong_lead_phone: ["zong team lead phone", "zong lead phone"],
   security_company: ["security company"],
   security_so_name: ["security supervisor so", "security so", "so supervisor"],
@@ -72,13 +73,14 @@ export async function POST(request: Request) {
     if (column(headers, fields.site_id) < 0) return NextResponse.json({ error: "A Site ID column is required." }, { status: 400 });
     const rows: Record<string, string>[] = [];
     const errors: { row: number; siteId: string; issue: string }[] = [];
+    const warnings: { row: number; siteId: string; issue: string }[] = [];
     const seen = new Set<string>();
 
     for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
       const siteId = valueAt(row, headers, fields.site_id);
       if (!siteId) continue;
-      if (seen.has(siteId)) { errors.push({ row: rowNumber, siteId, issue: "Duplicate Site ID in this file" }); continue; }
+      if (seen.has(siteId)) { warnings.push({ row: rowNumber, siteId, issue: "Duplicate Site ID skipped; the first row is kept" }); continue; }
       seen.add(siteId);
       const item: Record<string, string> = {};
       for (const [field, aliases] of Object.entries(fields)) item[field] = valueAt(row, headers, aliases);
@@ -93,7 +95,7 @@ export async function POST(request: Request) {
       if (error) throw error;
       return NextResponse.json({ imported: rows.length, result: data });
     }
-    return NextResponse.json({ fileName: file.name, rowCount: rows.length, errors, sample: rows.slice(0, 3).map(({ site_id, address, day_team, night_team }) => ({ site_id, address, day_team, night_team })) });
+    return NextResponse.json({ fileName: file.name, rowCount: rows.length, errors, warnings, sample: rows.slice(0, 3).map(({ site_id, address, site_area, f1_zone, day_team, night_team }) => ({ site_id, address, site_area, f1_zone, day_team, night_team })) });
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : "Master import failed.";
     return NextResponse.json({ error: message }, { status: 500 });

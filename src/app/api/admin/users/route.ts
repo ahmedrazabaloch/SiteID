@@ -83,11 +83,15 @@ export async function POST(request: Request) {
     email_confirm: true,
     password: value.password,
     user_metadata: { full_name: value.fullName },
-    app_metadata: { fuel_ops_provisioned: "super_admin" },
   });
   if (createError) {
+    console.error("[admin/users] Supabase Auth createUser failed", {
+      code: createError.code,
+      status: createError.status,
+      message: createError.message,
+    });
     const duplicate = /already|exists|duplicate/i.test(createError.message);
-    return NextResponse.json({ error: duplicate ? "This ID number already belongs to an account." : createError.message }, { status: duplicate ? 409 : 400 });
+    return NextResponse.json({ error: duplicate ? "This ID number already belongs to an account." : "Supabase could not create this account. Check the server log for the Auth error details." }, { status: duplicate ? 409 : 400 });
   }
   if (!created.user) return NextResponse.json({ error: "Supabase did not return the new account." }, { status: 502 });
 

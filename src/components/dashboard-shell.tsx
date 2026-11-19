@@ -62,22 +62,42 @@ function DashboardContent({ profile }: { profile: Profile }) {
 
   const site = result?.site ?? {};
   const current = result?.current ?? {};
-  const route = String(site[targetShift === "day" ? "day_route" : "night_route"] ?? "Route not set");
-  const team = String(site[targetShift === "day" ? "day_team" : "night_team"] ?? "Team not set");
   const siteArea = normalizeArea(site.site_area);
-  const activeVehicle = result?.vehicles?.find((vehicle) => {
-    if (vehicle.field_shift !== targetShift) return false;
-    const assignedAreas = String(vehicle.route ?? "").split("&").map(normalizeArea);
-    return normalizeArea(vehicle.route) === normalizeArea(route) || assignedAreas.includes(siteArea);
-  });
+  const f1Zone = normalizeArea(site.f1_zone);
+  function assignedVehicle(shift: "day" | "night") {
+    const savedRoute = String(site[shift === "day" ? "day_route" : "night_route"] ?? "");
+    return result?.vehicles?.find((vehicle) => {
+      if (vehicle.field_shift !== shift) return false;
+      const assignedAreas = String(vehicle.route ?? "").split("&").map(normalizeArea);
+      if (f1Zone === "northkarachi") return shift === "day" && assignedAreas.includes("northnazimabad");
+      return (f1Zone && assignedAreas.includes(f1Zone)) || normalizeArea(vehicle.route) === normalizeArea(savedRoute) || assignedAreas.includes(siteArea);
+    });
+  }
+  const dayVehicle = assignedVehicle("day");
+  const nightVehicle = assignedVehicle("night");
+  const activeVehicle = targetShift === "day" ? dayVehicle : nightVehicle;
+  const routeFor = (shift: "day" | "night", vehicle: Record<string, unknown> | undefined) => {
+    const saved = String(site[shift === "day" ? "day_route" : "night_route"] ?? "");
+    if (saved) return saved;
+    if (!vehicle && shift === "night" && f1Zone === "northkarachi") return "No vehicle assigned";
+    return String(vehicle?.route ?? site.f1_zone ?? "Route not set");
+  };
+  const teamFor = (shift: "day" | "night", vehicle: Record<string, unknown> | undefined) =>
+    String(site[shift === "day" ? "day_team" : "night_team"] || vehicle?.team || vehicle?.route || "Not assigned");
+  const route = routeFor(targetShift, activeVehicle);
+  const crewLabel = (vehicle: Record<string, unknown> | undefined, shift: "day" | "night") => vehicle
+    ? String(vehicle.vehicle_number ?? "Vehicle") + " · Driver: " + String(vehicle.driver || "Not set") + " · Supervisor: " + String(vehicle.fueler_supervisor || "Not set")
+    : shift === "night" && f1Zone === "northkarachi" ? "No Night vehicle assigned" : "Not assigned";
+  const dayTeam = teamFor("day", dayVehicle);
+  const nightTeam = teamFor("night", nightVehicle);
   const message = result
     ? [
         `Fuel Request — Site ${String(site.site_id ?? siteId)}`,
         `Requested fuel: ${litres.trim() ? `${litres.trim()} L` : "[L]"}`,
-        `FormulaOne team: ${team}`,
+        "FormulaOne team: " + (targetShift === "day" ? dayTeam : nightTeam),
         `Route: ${route}`,
-        `Day team: ${String(site.day_team ?? "Not set")}`,
-        `Night team: ${String(site.night_team ?? "Not set")}`,
+        "Day team: " + dayTeam,
+        "Night team: " + nightTeam,
         `${result.contact.label}: ${result.contact.name ?? "Not set"}${result.contact.phone ? ` / ${result.contact.phone}` : ""}`,
       ].join("\n")
     : "";
@@ -129,14 +149,16 @@ function DashboardContent({ profile }: { profile: Profile }) {
                   <div className="result-grid">
                     <section className="data-section"><h3 className="section-title"><AppIcon name="site" />Site details · {String(site.site_id ?? "")}</h3><div className="site-detail-list">
                       <DetailRow icon="pin" label="Site address" value={[site.address, site.site_area].filter(Boolean).join(", ") || "Address not set"} />
-                      <DetailRow icon="route" label="Routing details" value={`Day · ${String(site.day_route ?? "Route not set")}  /  Night · ${String(site.night_route ?? "Route not set")}`} />
-                      <DetailRow icon="people" label="FormulaOne teams" value={`Day · ${String(site.day_team ?? "Not set")}  /  Night · ${String(site.night_team ?? "Not set")}`} />
+                      <DetailRow icon="route" label="F1 zone" value={String(site.f1_zone ?? "Not set")} />
+                      <DetailRow icon="vehicle" label="Day vehicle crew" value={crewLabel(dayVehicle, "day")} />
+                      <DetailRow icon="vehicle" label="Night vehicle crew" value={crewLabel(nightVehicle, "night")} />
+                      <DetailRow icon="route" label="Routing details" value={"Day · " + routeFor("day", dayVehicle) + "  /  Night · " + routeFor("night", nightVehicle)} />
+                      <DetailRow icon="people" label="FormulaOne teams" value={"Day · " + dayTeam + "  /  Night · " + nightTeam} />
                       <DetailRow icon="user" label="Cluster Owner" value={contactValue(site.cluster_owner_name, site.cluster_owner_phone)} />
                       <DetailRow icon="user" label="Night On-Caller" value={contactValue(site.night_on_caller_name, site.night_on_caller_phone)} />
                       <DetailRow icon="people" label="I-Engineering lead" value={contactValue(site.ie_lead_name, site.ie_lead_phone)} />
                       <DetailRow icon="people" label="Zong lead" value={contactValue(site.zong_lead_name, site.zong_lead_phone)} />
                       <DetailRow icon="people" label="Security SO" value={contactValue(site.security_so_name, site.security_so_phone)} />
-                      <DetailRow icon="vehicle" label="Assigned vehicle" value={String(activeVehicle?.vehicle_number ?? "Not assigned")} />
                     </div></section>
                     <section className="data-section"><h3 className="section-title"><AppIcon name="fuel" />Last fueling</h3><div className="last-fueling">
                       <Value label="Available fuel" value={formatValue(current.available_fuel, " L")} />

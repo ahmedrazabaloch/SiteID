@@ -1,0 +1,121 @@
+"use client";
+
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { friendlyError } from "@/components/toast-provider";
+
+type Site = Record<string, string | null> & { site_id: string; updated_at?: string; updated_by?: string | null };
+type Notify = (message: string, kind?: "success" | "warning" | "error" | "info") => void;
+
+const groups: { title: string; fields: readonly (readonly [string, string])[] }[] = [
+  { title: "Site details", fields: [["site_id", "Site ID"], ["address", "Address"], ["site_area", "Site area"], ["f1_zone", "F1 zone"]] },
+  { title: "FormulaOne teams and routes", fields: [["day_team", "Day team"], ["day_route", "Day route"], ["night_team", "Night team"], ["night_route", "Night route"]] },
+  { title: "Site contacts", fields: [["cluster_owner_name", "Cluster Owner (9 AM–9 PM)"], ["cluster_owner_phone", "Cluster Owner phone"], ["night_on_caller_name", "Night On-Caller"], ["night_on_caller_phone", "Night On-Caller phone"]] },
+  { title: "Client leads", fields: [["ie_lead_name", "I-Engineering lead"], ["ie_lead_phone", "I-Engineering lead phone"], ["zong_lead_name", "Zong lead"], ["zong_lead_phone", "Zong lead phone"]] },
+  { title: "Security and access", fields: [["security_company", "Security company"], ["security_so_name", "Security SO / supervisor"], ["security_so_phone", "Security contact"], ["access_notes", "Access notes"]] },
+  { title: "Generator and notes", fields: [["dg_brand", "DG brand / model"], ["dg_serial_number", "DG serial number"], ["dg_meter_status", "DG meter status"], ["site_status", "Site status"], ["other_notes", "Other notes"]] },
+];
+
+const emptyForm: Record<string, string> = Object.fromEntries(groups.flatMap((group) => group.fields).map(([key]) => [key, key === "dg_meter_status" ? "unknown" : ""]));
+
+export function SiteMasterManager({ notify, refreshToken }: { notify: Notify; refreshToken: number }) {
+  const [sites, setSites] = useState<Site[]>([]);
+  const [updaterNames, setUpdaterNames] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [form, setForm] = useState<Record<string, string>>(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const loadSites = useCallback(async () => {
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const from = (page - 1) * pageSize;
+      let sitesQuery = supabase.from("site_master").select("*", { count: "exact" });
+      const needle = search.trim().replace(/[^a-zA-Z0-9\s-]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+      if (needle) sitesQuery = sitesQuery.or(["site_id", "address", "site_area", "f1_zone", "cluster_owner_name"].map((field) => field + ".ilike.%" + needle + "%").join(","));
+      const { data, error, count } = await sitesQuery.order("site_id").range(from, from + pageSize - 1);
+      if (error) throw error;
+      const updaterIds = [...new Set((data ?? []).map((site) => site.updated_by).filter((id): id is string => Boolean(id)))];
+      const { data: profiles, error: profileError } = updaterIds.length
+        ? await supabase.from("profiles").select("id,full_name").in("id", updaterIds)
+        : { data: [], error: null };
+      if (profileError) throw profileError;
+      setSites((data ?? []) as Site[]);
+      setTotalCount(count ?? 0);
+      setUpdaterNames(Object.fromEntries((profiles ?? []).map((profile) => [profile.id, profile.full_name || "Name not set"])));
+    } catch (cause) { notify(friendlyError(cause, "Could not load master site records."), "error"); }
+    finally { setLoading(false); }
+  }, [notify, page, pageSize, search]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearch(query), 300);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  const firstRow = totalCount ? (page - 1) * pageSize + 1 : 0;
+  const lastRow = Math.min(page * pageSize, totalCount);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Fetch the active server-side page and refresh after imports.
+  useEffect(() => { void loadSites(); }, [loadSites, refreshToken]);
+
+  function resetForm() { setForm(emptyForm); setEditingId(null); }
+  function editSite(site: Site) {
+    const next = { ...emptyForm };
+    for (const group of groups) for (const [key] of group.fields) next[key] = String(site[key] ?? "");
+    setForm(next); setEditingId(site.site_id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function saveSite(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const newId = form.site_id.trim();
+    if (!newId) { notify("Enter a Site ID.", "warning"); return; }
+    setBusy(true);
+    try {
+      const supabase = createClient();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      const payload: Record<string, string | null> = { ...form, site_id: newId, updated_at: new Date().toISOString(), updated_by: user?.id ?? null };
+      if (editingId) {
+        const { data, error } = await supabase.from("site_master").update(payload).eq("site_id", editingId).select("site_id").maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error("This site could not be found. Refresh the list and try again.");
+        notify(newId === editingId ? "Site " + newId + " updated." : "Site ID changed from " + editingId + " to " + newId + ". Linked latest fueling data was updated too.", "success");
+      } else {
+        const { error } = await supabase.from("site_master").insert(payload);
+        if (error) throw error;
+        notify("Site " + newId + " added to Master Sites.", "success");
+      }
+      resetForm(); await loadSites();
+    } catch (cause) { notify(friendlyError(cause, "Could not save the site record."), "error"); }
+    finally { setBusy(false); }
+  }
+
+  return <section className="site-master-manager">
+    <div className="site-manager-heading"><div><h2>{editingId ? "Edit site " + editingId : "Add or edit a site"}</h2><p>Maintain site details here. Driver and supervisor are shown from the matching Route Vehicles assignment.</p></div><span className="site-total">{totalCount.toLocaleString("en-US")} sites</span></div>
+    <form className="site-master-form" onSubmit={saveSite}>
+      {groups.map((group) => <fieldset className="site-form-group" key={group.title}><legend>{group.title}</legend><div className="site-form-grid">
+        {group.fields.map(([key, label]) => <label className={key === "address" || key === "access_notes" || key === "other_notes" ? "site-field span-two" : "site-field"} key={key}>{label}
+          {key === "dg_meter_status" ? <select value={form[key]} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}><option value="unknown">N/A / Unknown</option><option value="working">Working</option><option value="faulty">Faulty</option><option value="replaced">Replaced</option><option value="missing">No meter</option><option value="suspected">Needs review</option></select>
+            : key === "address" || key === "access_notes" || key === "other_notes" ? <textarea rows={key === "address" ? 2 : 3} value={form[key]} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))} />
+            : <input value={form[key]} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))} required={key === "site_id"} />}
+        </label>)}
+      </div></fieldset>)}
+      <p className="site-derived-note">Vehicle driver and supervisor are derived from the route vehicle assignment and are not duplicated in the site record.</p>
+      <div className="site-form-actions"><button className="primary-button" type="submit" disabled={busy}>{busy ? "Saving…" : editingId ? "Save site changes" : "Add site"}</button>{editingId && <button className="secondary-button" type="button" onClick={resetForm}>Cancel edit</button>}</div>
+    </form>
+    <div className="site-list-heading"><div><h2>Master site records</h2><p>Search by Site ID, address, area, F1 zone, or Cluster Owner.</p></div><div className="site-list-controls"><label className="site-page-size">Rows per page<select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={10}>10</option><option value={20}>20</option><option value={50}>50</option></select></label><label className="site-search">Search sites<input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="e.g. 1260 or Gulshan" /></label></div></div>
+    <div className="table-wrap site-master-table"><table><thead><tr><th>Site ID</th><th>Address</th><th>Site area</th><th>F1 zone</th><th>Cluster Owner</th><th>Last updated</th><th>Updated by</th><th>Action</th></tr></thead><tbody>
+      {sites.map((site) => <tr key={site.site_id}><td><strong>{site.site_id}</strong></td><td>{site.address || "—"}</td><td>{site.site_area || "—"}</td><td>{site.f1_zone || "—"}</td><td>{site.cluster_owner_name || "—"}</td><td>{site.updated_at ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Karachi" }).format(new Date(site.updated_at)) : "—"}</td><td>{site.updated_by ? updaterNames[site.updated_by] || "User" : "—"}</td><td><button className="edit-button" type="button" onClick={() => editSite(site)}>Edit</button></td></tr>)}
+      {!sites.length && <tr><td colSpan={8}>{loading ? "Loading sites…" : query ? "No sites match your search." : "No sites yet. Import a workbook or add the first site above."}</td></tr>}
+    </tbody></table></div>
+    <div className="site-pagination"><span>Showing {firstRow}–{lastRow} of {totalCount.toLocaleString("en-US")}</span><div><button className="secondary-button" type="button" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)}>Previous</button><span>Page {page} of {pageCount}</span><button className="secondary-button" type="button" disabled={page >= pageCount || loading} onClick={() => setPage((current) => current + 1)}>Next</button></div></div>
+  </section>;
+}
