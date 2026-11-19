@@ -158,8 +158,9 @@ body { font-family: var(--font-roboto), sans-serif; font-size: 14px; -webkit-fon
 .profile-form-card .form-grid > div:last-child button { min-width: 135px; }
 .toast-viewport { position: fixed; top: 18px; right: 20px; bottom: auto; left: auto; z-index: 1000; display: grid; justify-items: end; gap: 9px; width: min(390px, calc(100vw - 32px)); pointer-events: none; }
 .toast { position: relative; inset: auto; display: grid; grid-template-columns: 30px minmax(0, 1fr) 26px; align-items: center; gap: 10px; width: 100%; min-width: 0; max-width: 100%; padding: 12px 13px; border: 1px solid #dfe9e5; border-radius: 12px; background: #fff; box-shadow: 0 12px 36px rgba(16, 62, 52, .14); color: #17312d; opacity: 1; transform: none; pointer-events: auto; transition: none; }
-.toast-mark { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #e4f6ee; color: #087d5b; font-size: 16px; font-weight: 800; }
-.toast-dismiss { display: grid; width: 26px; height: 26px; place-items: center; border: 0; border-radius: 6px; background: transparent; color: #687a80; font-size: 18px; line-height: 1; }
+.toast-mark { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; align-self: center; padding: 0; border-radius: 50%; background: #e4f6ee; color: #087d5b; font-size: 17px; font-weight: 800; line-height: 1; text-align: center; }
+.toast-message { align-self: center; color: #17312d; font-size: 14px; font-weight: 700; line-height: 1.4; }
+.toast-dismiss { display: grid; width: 26px; height: 26px; align-self: center; place-items: center; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #687a80; font-size: 18px; line-height: 1; }
 .toast-dismiss:hover { background: #f0f4f3; }
 .toast-success { border-color: #cfe9dc; }
 .toast-warning { border-color: #f0dfb8; }
