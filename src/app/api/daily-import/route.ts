@@ -39,7 +39,7 @@ function asDate(value: unknown): string | null {
 function firstIndex(headers: string[], choices: string[]) { return headers.findIndex((header) => choices.includes(header)); }
 const requiredColumns = [
   ["site id", "site code", "siteid"],
-  ["fueling date", "date"],
+  ["done date", "completion date", "completed date", "fueling date", "date"],
   ["available fuel", "fuel available", "fuel available before l", "fuel available before", "previous stock"],
   ["fuel poured", "fuel added", "fuel added l", "quantity filled"],
   ["current reading", "current dg reading", "present reading"],
@@ -80,13 +80,15 @@ export async function POST(request: Request) {
     if (!header) return NextResponse.json({ error: "Could not find a header row in the first 20 rows. Required columns: Site ID, Date, Available Fuel, Fuel Added, and Current Reading." }, { status: 400 });
     const { rowNumber: headerRowNumber, headers } = header;
     const idCol = firstIndex(headers, requiredColumns[0]);
-    const dateCol = firstIndex(headers, requiredColumns[1]);
+    const doneDateCol = firstIndex(headers, ["done date", "completion date", "completed date"]);
+    const dateCol = doneDateCol >= 0 ? doneDateCol : firstIndex(headers, ["fueling date", "date"]);
     const availableCol = firstIndex(headers, requiredColumns[2]);
     const pouredCol = firstIndex(headers, requiredColumns[3]);
     const readingCol = firstIndex(headers, requiredColumns[4]);
     const previousReadingCol = firstIndex(headers, ["previous reading", "last reading"]);
     const previousTotalCol = firstIndex(headers, ["total maintained", "total fuel", "maintain"]);
     const meterStatusCol = firstIndex(headers, ["dg meter status", "meter status"]);
+    const ticketStatusCol = firstIndex(headers, ["ticket status", "status"]);
     const needed = [idCol, dateCol, availableCol, pouredCol, readingCol];
     if (needed.some((index) => index < 0)) {
       return NextResponse.json({ error: "Required columns: Site ID, Fueling Date, Available Fuel, Fuel Poured, Current Reading." }, { status: 400 });
@@ -101,6 +103,15 @@ export async function POST(request: Request) {
       const row = sheet.getRow(rowNumber);
       const siteId = clean(row.getCell(idCol + 1).value);
       if (!siteId) continue;
+      const ticketStatus = ticketStatusCol < 0 ? "" : clean(row.getCell(ticketStatusCol + 1).value).toLowerCase();
+      if (ticketStatus.includes("cancel")) {
+        warnings.push({ row: rowNumber, siteId, issue: "Ticket is cancelled; row skipped" });
+        continue;
+      }
+      if (doneDateCol >= 0 && isBlank(row.getCell(doneDateCol + 1).value)) {
+        warnings.push({ row: rowNumber, siteId, issue: "Done Date is blank; fueling is not marked complete, row skipped" });
+        continue;
+      }
       const fuelingDate = asDate(row.getCell(dateCol + 1).value);
       const availableRaw = row.getCell(availableCol + 1).value;
       const pouredRaw = row.getCell(pouredCol + 1).value;
