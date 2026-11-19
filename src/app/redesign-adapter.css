@@ -143,7 +143,7 @@ body.vehicle-editor-open { overflow: hidden; }
 .vehicle-table, .user-table { overflow: auto; }
 .vehicle-table table, .user-table table { min-width: 740px; }
 .edit-button, .secondary-button { border-radius: 8px; }
-.duty-tag { display: inline-flex; padding: 5px 9px; border-radius: 30px; font-size: 10px; font-weight: 700; }
+.duty-tag { display: inline-flex; min-width: 58px; min-height: 25px; align-items: center; justify-content: center; padding: 0 9px; border-radius: 30px; font-size: 10px; font-weight: 700; line-height: 1; text-align: center; vertical-align: middle; }
 .duty-day { background: #e4f6ee; color: #087d5b; }
 .duty-night { background: #edf1fb; color: #52658d; }
 .user-create-form { margin-bottom: 21px; }
