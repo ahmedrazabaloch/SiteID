@@ -146,7 +146,6 @@ function DashboardContent({ profile }: { profile: Profile }) {
               </form><p className="search-helper">A Site ID is required. Requested fuel can be left blank.</p></div>
               {result && (
                 <section className="result-panel">
-                  <div className="lookup-result-head"><div className="result-site"><span className="result-icon"><AppIcon name="site" /></span><div><strong>Site {String(site.site_id ?? "")}</strong><span>{String(site.site_area ?? site.address ?? "Site record")}</span></div></div><span className="pill pill-green">Site found</span></div>
                   <div className="lookup-grid">
                     <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="site" />Site details</div><div className="card-subtitle">Location, field crews and client contacts</div></div><span className="pill pill-gray">ID {String(site.site_id ?? "")}</span></div><div className="site-detail-list info-list">
                       <DetailRow icon="pin" label="Site address" value={[site.address, site.site_area].filter(Boolean).join(", ") || "Address not set"} />
