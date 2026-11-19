@@ -147,7 +147,7 @@ function DashboardContent({ profile }: { profile: Profile }) {
               {result && (
                 <section className="result-panel">
                   <div className="lookup-grid">
-                    <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="site" />Site details</div><div className="card-subtitle">Location, field crews and client contacts</div></div><span className="pill pill-gray">ID {String(site.site_id ?? "")}</span></div><div className="site-detail-list info-list">
+                    <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="site" />Site details</div><div className="card-subtitle">Location, field crews and client contacts</div></div><span className="pill pill-gray site-id-badge">ID {String(site.site_id ?? "")}</span></div><div className="site-detail-list info-list">
                       <DetailRow icon="pin" label="Site address" value={[site.address, site.site_area].filter(Boolean).join(", ") || "Address not set"} />
                       <DetailRow icon="route" label="F1 zone" value={String(site.f1_zone ?? "Not set")} />
                       <DetailRow icon="vehicle" label="Day vehicle crew" value={crewLabel(dayVehicle, "day")} />
@@ -160,7 +160,7 @@ function DashboardContent({ profile }: { profile: Profile }) {
                       <DetailRow icon="people" label="Zong lead" value={contactValue(site.zong_lead_name, site.zong_lead_phone)} />
                       <DetailRow icon="people" label="Security SO" value={contactValue(site.security_so_name, site.security_so_phone)} />
                     </div></section>
-                    <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="fuel" />Last fueling</div><div className="card-subtitle">Most recent recorded generator fueling</div></div><span className="pill pill-gray">{formatFuelingDate(current.fueling_date)}</span></div><div className="last-fueling fuel-card-body">
+                    <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="fuel" />Last fueling</div><div className="card-subtitle">Most recent recorded generator fueling</div></div><span className="pill pill-gray fuel-date-badge">{formatFuelingDate(current.fueling_date)}</span></div><div className="last-fueling fuel-card-body">
                       <Value label="Fueling date" value={formatFuelingDate(current.fueling_date)} />
                       <Value label="Available fuel" value={formatValue(current.available_fuel, " L")} />
                       <Value label="Fuel poured" value={formatValue(current.fuel_poured, " L")} />

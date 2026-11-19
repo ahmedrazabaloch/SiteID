@@ -33,7 +33,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     {children}
     <div className="toast-viewport" aria-live="polite" aria-relevant="additions text">
       {toasts.map((toast) => <div key={toast.id} className={`toast toast-${toast.kind}`} role={toast.kind === "error" ? "alert" : "status"}>
-        <span className="toast-mark" aria-hidden="true">{toast.kind === "success" ? "✓" : toast.kind === "warning" ? "!" : toast.kind === "error" ? "×" : "i"}</span>
+        <span className="toast-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          {toast.kind === "success" ? <path d="m5 12 4.5 4.5L19 7" />
+            : toast.kind === "warning" ? <><path d="M12 7v6" /><path d="M12 17h.01" /></>
+              : toast.kind === "error" ? <><path d="m7 7 10 10" /><path d="M17 7 7 17" /></>
+                : <><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5" /><path d="M12 8h.01" /></>}
+        </svg></span>
         <span className="toast-message">{toast.message}</span>
         <button className="toast-dismiss" type="button" onClick={() => dismiss(toast.id)} aria-label="Dismiss notification">×</button>
       </div>)}

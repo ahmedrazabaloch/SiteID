@@ -27,6 +27,8 @@ body { font-family: var(--font-roboto), sans-serif; font-size: 14px; -webkit-fon
 .result-panel { margin-top: 20px; }
 .lookup-grid { grid-template-columns: minmax(0, 1.15fr) minmax(370px, .85fr); }
 .lookup-grid > .card { min-width: 0; overflow: hidden; }
+.site-id-badge, .fuel-date-badge { display: inline-flex; min-height: 32px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 7px; padding: 7px 11px; border: 1px solid #e1e9e6; border-radius: 999px; background: #f0f4f2; color: #435b54; font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap; }
+.site-id-badge::before, .fuel-date-badge::before { width: 7px; height: 7px; flex: 0 0 7px; }
 .site-detail-list { padding: 4px 20px 12px; }
 .detail-row.info-row { grid-template-columns: 30px minmax(0, 1fr); padding: 11px 0; }
 .detail-row .info-icon { display: grid; width: 26px; height: 26px; place-items: center; color: var(--emerald); }
@@ -152,8 +154,9 @@ body { font-family: var(--font-roboto), sans-serif; font-size: 14px; -webkit-fon
 .profile-form-card .form-grid { align-items: end; }
 .profile-form-card .form-grid > div:last-child button { min-width: 135px; }
 .toast-viewport { position: fixed; top: 18px; right: 20px; bottom: auto; left: auto; z-index: 1000; display: grid; justify-items: end; gap: 9px; width: min(390px, calc(100vw - 32px)); pointer-events: none; }
-.toast { position: relative; inset: auto; display: grid; grid-template-columns: 30px minmax(0, 1fr) 26px; align-items: center; gap: 10px; width: 100%; min-width: 0; max-width: 100%; padding: 12px 13px; border: 1px solid #dfe9e5; border-radius: 12px; background: #fff; box-shadow: 0 12px 36px rgba(16, 62, 52, .14); color: #17312d; opacity: 1; transform: none; pointer-events: auto; transition: none; }
-.toast-mark { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; align-self: center; padding: 0; border-radius: 50%; background: #e4f6ee; color: #087d5b; font-size: 17px; font-weight: 800; line-height: 1; text-align: center; }
+.toast { position: relative; inset: auto; display: grid; grid-template-columns: 36px minmax(0, 1fr) 26px; align-items: center; gap: 10px; width: 100%; min-width: 0; max-width: 100%; padding: 12px 13px; border: 1px solid #dfe9e5; border-radius: 12px; background: #fff; box-shadow: 0 12px 36px rgba(16, 62, 52, .14); color: #17312d; opacity: 1; transform: none; pointer-events: auto; transition: none; }
+.toast-mark { display: flex; width: 34px; height: 34px; flex: 0 0 34px; align-items: center; justify-content: center; align-self: center; padding: 0; border-radius: 50%; background: #e4f6ee; color: #087d5b; }
+.toast-mark svg { display: block; width: 22px; height: 22px; flex: 0 0 22px; }
 .toast-message { align-self: center; color: #17312d; font-size: 14px; font-weight: 700; line-height: 1.4; }
 .toast-dismiss { display: grid; width: 26px; height: 26px; align-self: center; place-items: center; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #687a80; font-size: 18px; line-height: 1; }
 .toast-dismiss:hover { background: #f0f4f3; }
@@ -218,4 +221,5 @@ body { font-family: var(--font-roboto), sans-serif; font-size: 14px; -webkit-fon
   .vehicle-form-actions .btn, .profile-form-card .form-grid > div:last-child button { width: 100%; }
   .profile-layout { grid-template-columns: minmax(0, 1fr); }
   .credentials-card { align-items: flex-start; flex-wrap: wrap; }
+  .site-id-badge, .fuel-date-badge { min-height: 29px; padding: 6px 9px; font-size: 11px; }
 }
