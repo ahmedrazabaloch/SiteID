@@ -229,6 +229,12 @@ function UserManagementPanel({ notify }: { notify: Notify }) {
   const [form, setForm] = useState({ username: "", fullName: "", role: "operator" as "admin" | "operator", shift: "day" as "day" | "evening" | "night", password: "" });
   const [createdCredentials, setCreatedCredentials] = useState<{ username: string; password: string; fullName: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const closeEditor = useCallback(() => {
+    setForm({ username: "", fullName: "", role: "operator", shift: "day", password: "" });
+    setShowPassword(false);
+    setEditorOpen(false);
+  }, []);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -244,6 +250,14 @@ function UserManagementPanel({ notify }: { notify: Notify }) {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- Fetch once when this admin panel mounts.
   useEffect(() => { void loadUsers(); }, [loadUsers]);
+
+  useEffect(() => {
+    if (!editorOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape" && !busy) closeEditor(); };
+    document.addEventListener("keydown", closeOnEscape);
+    document.body.classList.add("user-editor-open");
+    return () => { document.removeEventListener("keydown", closeOnEscape); document.body.classList.remove("user-editor-open"); };
+  }, [editorOpen, busy, closeEditor]);
 
   function generatePassword() {
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@$%";
@@ -268,6 +282,8 @@ function UserManagementPanel({ notify }: { notify: Notify }) {
       setCreatedCredentials({ username, password: form.password, fullName: form.fullName.trim() });
       notify(`${form.fullName.trim()}’s ${form.role} account has been created.`, "success");
       setForm({ username: "", fullName: "", role: "operator", shift: "day", password: "" });
+      setShowPassword(false);
+      setEditorOpen(false);
       await loadUsers();
     } catch (cause) { notify(friendlyError(cause, "Could not create the user account."), "error"); }
     finally { setBusy(false); }
@@ -297,20 +313,25 @@ function UserManagementPanel({ notify }: { notify: Notify }) {
   }
 
   return <section className="admin-placeholder user-management-page">
-    <form className="admin-grid user-create-form form-grid card card-pad" onSubmit={createAccount}>
-      <label className="field">ID number<input inputMode="numeric" autoComplete="off" maxLength={11} placeholder="03139090700" value={form.username} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value.replace(/\D/g, "").slice(0, 11) }))} required /></label>
-      <label className="field">Full name<input autoComplete="off" maxLength={80} value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} required /></label>
-      <label className="field">Account role<select value={form.role} onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as "admin" | "operator" }))}><option value="operator">Operator</option><option value="admin">Admin</option></select></label>
-      <label className="field">Duty shift<select value={form.shift} onChange={(event) => setForm((current) => ({ ...current, shift: event.target.value as "day" | "evening" | "night" }))}><option value="day">Day · 08:00–16:00</option><option value="evening">Evening · 16:00–00:00</option><option value="night">Night · 00:00–08:00</option></select></label>
-      <label className="user-password-field field field-full">Initial password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={10} value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} required /><div className="password-actions"><button type="button" className="btn btn-secondary" onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? "Hide password" : "Show password"}</button><button type="button" className="btn btn-secondary" onClick={generatePassword}>Generate password</button></div></label>
-      <div className="vehicle-form-actions"><button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button></div>
-    </form>
+    <div className="vehicle-list-heading user-list-heading"><div><h2>Accounts</h2><p>Create staff logins, assign roles and manage account access.</p></div><div className="vehicle-heading-actions"><span>{users.filter((user) => user.is_active).length} active · {users.length} total</span><button className="btn btn-primary" type="button" onClick={() => { setCreatedCredentials(null); setForm({ username: "", fullName: "", role: "operator", shift: "day", password: "" }); setShowPassword(false); setEditorOpen(true); }}>Add user</button></div></div>
+    {editorOpen && <div className="site-editor-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) closeEditor(); }}>
+      <section className="site-editor-dialog user-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="user-editor-title">
+        <header className="site-editor-header"><div><span className="eyebrow">Users & access</span><h2 id="user-editor-title">Create a staff account</h2><p>Set the login ID, account role, shift and initial password.</p></div><button className="site-editor-close" type="button" aria-label="Close account form" disabled={busy} onClick={closeEditor}>×</button></header>
+        <form className="admin-grid user-create-form user-modal-form form-grid" onSubmit={createAccount}>
+          <label className="field">ID number<input inputMode="numeric" autoComplete="off" maxLength={11} placeholder="03139090700" value={form.username} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value.replace(/\D/g, "").slice(0, 11) }))} required /></label>
+          <label className="field">Full name<input autoComplete="off" maxLength={80} value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} required /></label>
+          <label className="field">Account role<select value={form.role} onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as "admin" | "operator" }))}><option value="operator">Operator</option><option value="admin">Admin</option></select></label>
+          <label className="field">Duty shift<select value={form.shift} onChange={(event) => setForm((current) => ({ ...current, shift: event.target.value as "day" | "evening" | "night" }))}><option value="day">Day · 08:00–16:00</option><option value="evening">Evening · 16:00–00:00</option><option value="night">Night · 00:00–08:00</option></select></label>
+          <label className="user-password-field field field-full">Initial password<input type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={10} value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} required /><div className="password-actions"><button type="button" className="btn btn-secondary" onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? "Hide password" : "Show password"}</button><button type="button" className="btn btn-secondary" onClick={generatePassword}>Generate password</button></div></label>
+          <div className="user-modal-actions"><button className="btn btn-secondary" type="button" onClick={closeEditor} disabled={busy}>Cancel</button><button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button></div>
+        </form>
+      </section>
+    </div>}
     {createdCredentials && <div className="credentials-card"><div><strong>Share these login details with {createdCredentials.fullName}</strong><p>ID: <code>{createdCredentials.username}</code> · Password: <code>{createdCredentials.password}</code></p></div><button className="secondary-button" type="button" onClick={copyCredentials}>Copy login details</button><button className="credential-dismiss" type="button" onClick={() => setCreatedCredentials(null)} aria-label="Hide credentials">×</button></div>}
-    <div className="vehicle-list-heading"><h2>Accounts</h2><span>{users.length} total</span></div>
     <div className="table-wrap user-table"><table><thead><tr><th>Staff member</th><th>Login ID</th><th>Role</th><th>Duty shift</th><th>Status</th><th>Action</th></tr></thead><tbody>
       {users.map((user) => <tr key={user.id}><td><strong>{user.full_name || "Name not set"}</strong></td><td>{user.username || user.email || user.phone || "—"}</td><td>{user.role.replace("_", " ")}</td><td>{user.operator_shift}</td><td><span className={`account-status ${user.is_active ? "account-active" : "account-inactive"}`}>{user.is_active ? "Active" : "Deactivated"}</span></td><td><button className="edit-button" type="button" disabled={busy || user.role === "super_admin"} onClick={() => void toggleAccount(user)}>{user.is_active ? "Deactivate" : "Reactivate"}</button></td></tr>)}
       {!users.length && <tr><td colSpan={6}>{loading ? "Loading accounts…" : "No accounts found."}</td></tr>}
     </tbody></table></div>
-    <p className="user-security-note">Passwords are never displayed after the account is created. A deactivated account cannot sign in or access site data.</p>
+    <p className="user-security-note">Passwords are shown only once after account creation. Deactivated accounts cannot sign in or access site data.</p>
   </section>;
 }

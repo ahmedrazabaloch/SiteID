@@ -147,6 +147,11 @@ body.vehicle-editor-open { overflow: hidden; }
 .duty-day { background: #e4f6ee; color: #087d5b; }
 .duty-night { background: #edf1fb; color: #52658d; }
 .user-create-form { margin-bottom: 21px; }
+.user-list-heading { margin-top: 0; }
+.user-modal-form { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 14px; margin: 0; padding: 20px 22px 22px; border: 0; border-radius: 0 0 16px 16px; box-shadow: none; }
+.user-modal-actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; gap: 8px; padding-top: 13px; border-top: 1px solid var(--line-2); }
+.user-modal-actions .btn { min-width: 120px; }
+body.user-editor-open { overflow: hidden; }
 .user-password-field { grid-column: 1 / -1; }
 .user-password-field.field { align-items: stretch; }
 .password-actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -285,10 +290,12 @@ body.vehicle-editor-open { overflow: hidden; }
   .site-pagination .pagination { width: 100%; justify-content: space-between; }
   .vehicle-form, .user-create-form { grid-template-columns: minmax(0, 1fr); }
   .vehicle-modal-form { grid-template-columns: minmax(0, 1fr); }
+  .user-modal-form { grid-template-columns: minmax(0, 1fr); padding: 16px; }
   .vehicle-form-actions { grid-column: 1; }
   .vehicle-modal-actions { grid-column: 1; }
+  .user-modal-actions { grid-column: 1; }
   .user-password-field { grid-column: 1; }
-  .vehicle-form-actions .btn, .vehicle-modal-actions .btn, .profile-form-card .form-grid > div:last-child button { width: 100%; }
+  .vehicle-form-actions .btn, .vehicle-modal-actions .btn, .user-modal-actions .btn, .profile-form-card .form-grid > div:last-child button { width: 100%; }
   .profile-layout { grid-template-columns: minmax(0, 1fr); }
   .credentials-card { align-items: flex-start; flex-wrap: wrap; }
   .site-id-badge, .fuel-date-badge { min-height: 29px; padding: 6px 9px; font-size: 11px; }
