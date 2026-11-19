@@ -129,6 +129,15 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .vehicle-form-actions { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
 .vehicle-list-heading, .site-manager-heading, .site-list-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
 .vehicle-list-heading { margin: 23px 0 11px; }
+.vehicle-list-heading { align-items: center; margin-top: 0; }
+.vehicle-list-heading h2 { margin-bottom: 4px; }
+.vehicle-list-heading p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.vehicle-heading-actions { display: flex; align-items: center; gap: 12px; }
+.vehicle-heading-actions > span { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.vehicle-modal-form { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 14px; margin: 0; padding: 20px 22px 22px; border: 0; border-radius: 0 0 16px 16px; box-shadow: none; }
+.vehicle-modal-actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; gap: 8px; padding-top: 13px; border-top: 1px solid var(--line-2); }
+.vehicle-modal-actions .btn { min-width: 112px; }
+body.vehicle-editor-open { overflow: hidden; }
 .vehicle-list-heading h2, .site-manager-heading h2, .site-list-heading h2 { margin: 0; font-size: 16px; font-weight: 700; }
 .vehicle-list-heading > span { color: var(--muted); font-size: 11px; }
 .vehicle-table, .user-table { overflow: auto; }
@@ -270,12 +279,16 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
   .site-search { flex: 1; width: auto; }
   .site-mobile-records { display: flex; flex-direction: column; gap: 9px; }
   .vehicle-table, .user-table, .preview-table.table-wrap { display: block; }
+  .vehicle-list-heading { align-items: center; }
+  .vehicle-heading-actions { flex-wrap: wrap; justify-content: flex-end; }
   .site-pagination { align-items: flex-start; flex-direction: column; }
   .site-pagination .pagination { width: 100%; justify-content: space-between; }
   .vehicle-form, .user-create-form { grid-template-columns: minmax(0, 1fr); }
+  .vehicle-modal-form { grid-template-columns: minmax(0, 1fr); }
   .vehicle-form-actions { grid-column: 1; }
+  .vehicle-modal-actions { grid-column: 1; }
   .user-password-field { grid-column: 1; }
-  .vehicle-form-actions .btn, .profile-form-card .form-grid > div:last-child button { width: 100%; }
+  .vehicle-form-actions .btn, .vehicle-modal-actions .btn, .profile-form-card .form-grid > div:last-child button { width: 100%; }
   .profile-layout { grid-template-columns: minmax(0, 1fr); }
   .credentials-card { align-items: flex-start; flex-wrap: wrap; }
   .site-id-badge, .fuel-date-badge { min-height: 29px; padding: 6px 9px; font-size: 11px; }

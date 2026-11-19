@@ -124,6 +124,12 @@ function VehiclePanel({ notify }: { notify: Notify }) {
   const [form, setForm] = useState({ route: "", field_shift: "day" as "day" | "night", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" });
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const closeEditor = useCallback(() => {
+    setEditing(null);
+    setForm({ route: "", field_shift: "day", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" });
+    setEditorOpen(false);
+  }, []);
 
   const loadVehicles = useCallback(async () => {
     try {
@@ -137,6 +143,14 @@ function VehiclePanel({ notify }: { notify: Notify }) {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- Fetch once when this admin panel mounts.
   useEffect(() => { void loadVehicles(); }, [loadVehicles]);
+
+  useEffect(() => {
+    if (!editorOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape" && !busy) closeEditor(); };
+    document.addEventListener("keydown", closeOnEscape);
+    document.body.classList.add("vehicle-editor-open");
+    return () => { document.removeEventListener("keydown", closeOnEscape); document.body.classList.remove("vehicle-editor-open"); };
+  }, [editorOpen, busy, closeEditor]);
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true);
@@ -165,28 +179,39 @@ function VehiclePanel({ notify }: { notify: Notify }) {
       }
       setEditing(null);
       setForm({ route: "", field_shift: "day", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" });
+      setEditorOpen(false);
       await loadVehicles();
     } catch (cause) {
       notify(friendlyError(cause, "Could not save vehicle assignment."), "error");
     } finally { setBusy(false); }
   }
+  function addVehicle() {
+    setEditing(null);
+    setForm({ route: "", field_shift: "day", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" });
+    setEditorOpen(true);
+  }
   function editVehicle(vehicle: VehicleRow) {
     setEditing({ route: vehicle.route, field_shift: vehicle.field_shift });
     setForm({ route: vehicle.route, field_shift: vehicle.field_shift, team: vehicle.team, vehicle_number: vehicle.vehicle_number, driver: vehicle.driver, fueler_supervisor: vehicle.fueler_supervisor });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setEditorOpen(true);
   }
 
   return <section className="admin-placeholder vehicle-page">
-    <form className="admin-grid vehicle-form form-grid card card-pad" onSubmit={save}>
-      <label className="field">Duty<select value={form.field_shift} onChange={(event) => setForm((current) => ({ ...current, field_shift: event.target.value as "day" | "night" }))}><option value="day">Day</option><option value="night">Night</option></select></label>
-      <label className="field">Vehicle number<input value={form.vehicle_number} onChange={(event) => setForm((current) => ({ ...current, vehicle_number: event.target.value }))} required /></label>
-      <label className="field">Zone area<input value={form.route} onChange={(event) => setForm((current) => ({ ...current, route: event.target.value }))} required /></label>
-      <label className="field">FormulaOne team name (optional)<input value={form.team} onChange={(event) => setForm((current) => ({ ...current, team: event.target.value }))} placeholder="Defaults to zone area" /></label>
-      <label className="field">Driver<input value={form.driver} onChange={(event) => setForm((current) => ({ ...current, driver: event.target.value }))} /></label>
-      <label className="field">Supervisor<input value={form.fueler_supervisor} onChange={(event) => setForm((current) => ({ ...current, fueler_supervisor: event.target.value }))} /></label>
-      <div className="vehicle-form-actions"><button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Add vehicle"}</button>{editing && <button className="btn btn-secondary" type="button" onClick={() => { setEditing(null); setForm({ route: "", field_shift: "day", team: "", vehicle_number: "", driver: "", fueler_supervisor: "" }); }}>Cancel edit</button>}</div>
-    </form>
-    <div className="vehicle-list-heading"><h2>Vehicle assignments</h2><span>{vehicles.length} total</span></div>
+    <div className="vehicle-list-heading"><div><h2>Vehicle assignments</h2><p>Manage day and night vehicle crews and zone assignments.</p></div><div className="vehicle-heading-actions"><span>{vehicles.length} total</span><button className="btn btn-primary" type="button" onClick={addVehicle}>Add vehicle</button></div></div>
+    {editorOpen && <div className="site-editor-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) closeEditor(); }}>
+      <section className="site-editor-dialog vehicle-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="vehicle-editor-title">
+        <header className="site-editor-header"><div><span className="eyebrow">Route vehicles</span><h2 id="vehicle-editor-title">{editing ? "Edit vehicle assignment" : "Add vehicle assignment"}</h2><p>Enter the duty, zone, vehicle and crew details.</p></div><button className="site-editor-close" type="button" aria-label="Close vehicle editor" disabled={busy} onClick={closeEditor}>×</button></header>
+        <form className="admin-grid vehicle-form vehicle-modal-form form-grid" onSubmit={save}>
+          <label className="field">Duty<select value={form.field_shift} onChange={(event) => setForm((current) => ({ ...current, field_shift: event.target.value as "day" | "night" }))}><option value="day">Day</option><option value="night">Night</option></select></label>
+          <label className="field">Vehicle number<input value={form.vehicle_number} onChange={(event) => setForm((current) => ({ ...current, vehicle_number: event.target.value }))} required /></label>
+          <label className="field">Zone area<input value={form.route} onChange={(event) => setForm((current) => ({ ...current, route: event.target.value }))} required /></label>
+          <label className="field">FormulaOne team name (optional)<input value={form.team} onChange={(event) => setForm((current) => ({ ...current, team: event.target.value }))} placeholder="Defaults to zone area" /></label>
+          <label className="field">Driver<input value={form.driver} onChange={(event) => setForm((current) => ({ ...current, driver: event.target.value }))} /></label>
+          <label className="field">Supervisor<input value={form.fueler_supervisor} onChange={(event) => setForm((current) => ({ ...current, fueler_supervisor: event.target.value }))} /></label>
+          <div className="vehicle-modal-actions"><button className="btn btn-secondary" type="button" onClick={closeEditor} disabled={busy}>Cancel</button><button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Add vehicle"}</button></div>
+        </form>
+      </section>
+    </div>}
     <div className="table-wrap vehicle-table"><table><thead><tr><th>Duty</th><th>FormulaOne team</th><th>Vehicle number</th><th>Zone area</th><th>Driver</th><th>Supervisor</th><th><span className="visually-hidden">Actions</span></th></tr></thead><tbody>
       {vehicles.map((vehicle) => <tr key={`${vehicle.route}-${vehicle.field_shift}`}><td><span className={`duty-tag duty-${vehicle.field_shift}`}>{vehicle.field_shift === "day" ? "Day" : "Night"}</span></td><td>{vehicle.team || vehicle.route}</td><td><strong>{vehicle.vehicle_number}</strong></td><td>{vehicle.route}</td><td>{vehicle.driver || "—"}</td><td>{vehicle.fueler_supervisor || "—"}</td><td><button className="edit-button" type="button" onClick={() => editVehicle(vehicle)}>Edit</button></td></tr>)}
       {!vehicles.length && <tr><td colSpan={7}>{loading ? "Loading vehicle assignments…" : "No vehicle assignments yet. Add the first vehicle above."}</td></tr>}
