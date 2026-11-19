@@ -14,7 +14,7 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; min-height: 100%; background: var(--canvas); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+html, body { margin: 0; min-height: 100%; background: var(--canvas); color: var(--ink); font-family: var(--font-roboto), sans-serif; }
 button, input, select { font: inherit; }
 button, a, select { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
@@ -108,7 +108,7 @@ input:focus, select:focus { outline: none; border-color: #51bba0; box-shadow: 0 
 .message-head label { grid-template-columns: auto 150px; align-items: center; gap: 10px; font-size: 12px; }
 .message-head select { min-height: 36px; padding: 6px 9px; font-size: 13px; }
 .message-preview { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 15px 17px; padding: 12px 14px; border: 1px solid #d6e0e3; border-radius: 8px; background: #fff; }
-.message-preview pre { margin: 0; color: #26353b; white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/1.5 Arial, Helvetica, sans-serif; }
+.message-preview pre { margin: 0; color: #26353b; white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/1.5 var(--font-roboto), sans-serif; }
 .copy-button { flex: 0 0 auto; min-height: 39px; }
 .button-row { display: flex; gap: 9px; flex-wrap: wrap; }
 
