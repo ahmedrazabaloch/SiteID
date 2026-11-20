@@ -4,6 +4,7 @@ import "./globals.css";
 import "./redesign-prototype.css";
 import "./redesign-adapter.css";
 import { ServiceWorker } from "@/components/service-worker";
+import { Analytics } from "@vercel/analytics/next";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={roboto.variable}>
         <ServiceWorker />
         {children}
+        <Analytics />
       </body>
     </html>
   );
