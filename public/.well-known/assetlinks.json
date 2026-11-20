@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ahmedraza.searchid",
+      "sha256_cert_fingerprints": [
+        "E7:8F:3F:55:84:EF:B2:6B:6E:BF:EA:CC:EA:2F:56:ED:57:5D:D5:DF:25:B4:9B:46:8C:5E:A5:49:49:7A:21:2C"
+      ]
+    }
+  }
+]

@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android TWA build outputs and local signing material
+/.gradle/
+/android/.gradle/
+/android/app/build/
+/android/app-release-*.apk
+/android/app-release-*.aab
+/android/*.idsig
+*.keystore
