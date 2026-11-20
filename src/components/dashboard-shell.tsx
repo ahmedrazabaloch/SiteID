@@ -148,10 +148,10 @@ function DashboardContent({ profile }: { profile: Profile }) {
         <div className="content">{section === "profile" ? <ProfilePanel profile={{ ...profile, name: displayName }} onNameSaved={setDisplayName} onSignOut={signOut} /> : section === "lookup" ? (
             <>
               <div className="card search-card"><form className="lookup-form search-grid" onSubmit={lookup}>
-                <label>Site ID<input value={siteId} onChange={(event) => setSiteId(event.target.value)} inputMode="numeric" placeholder="e.g. 112" required /></label>
+                <label>Site ID or mobile DG van<input value={siteId} onChange={(event) => setSiteId(event.target.value)} placeholder="e.g. 112 or Van 07" required /></label>
                 <label>Requested fuel (L)<input value={litres} onChange={(event) => setLitres(event.target.value)} inputMode="decimal" placeholder="e.g. 120" /></label>
                 <button className="btn btn-primary" disabled={busy}>{busy ? "Finding site…" : <><AppIcon name="search" />Find site</>}</button>
-              </form><p className="search-helper">A Site ID is required. Requested fuel can be left blank.</p></div>
+              </form><p className="search-helper">Search by Site ID or type a mobile DG van number, such as Van 01–10. Requested fuel can be left blank.</p></div>
               {result && (
                 <section className="result-panel">
                   <div className="lookup-grid">

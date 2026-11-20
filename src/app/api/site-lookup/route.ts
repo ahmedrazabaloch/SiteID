@@ -9,8 +9,8 @@ function contactWindow() {
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const siteId = url.searchParams.get("siteId")?.trim();
-    if (!siteId) return NextResponse.json({ error: "Enter a Site ID." }, { status: 400 });
+    const searchTerm = url.searchParams.get("siteId")?.trim();
+    if (!searchTerm) return NextResponse.json({ error: "Enter a Site ID or mobile DG van number." }, { status: 400 });
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -20,16 +20,33 @@ export async function GET(request: Request) {
     if (profileError) throw profileError;
     if (!profile?.is_active) return NextResponse.json({ error: "This account is inactive." }, { status: 403 });
 
-    const { data: site, error: siteError } = await supabase
+    const { data: exactSite, error: siteError } = await supabase
       .from("site_master")
       .select("*")
-      .eq("site_id", siteId)
+      .eq("site_id", searchTerm)
       .maybeSingle();
     if (siteError) throw siteError;
-    if (!site) return NextResponse.json({ error: `Site ID ${siteId} was not found in Master Sites.` }, { status: 404 });
+    let site = exactSite;
+    if (!site) {
+      const vanMatch = searchTerm.match(/^(?:(?:mobile\s*)?dg\s*)?van\s*0?(\d{1,2})(?:\s*south[-\s]?1)?$/i);
+      if (vanMatch) {
+        const vanNumber = Number(vanMatch[1]);
+        if (vanNumber >= 1 && vanNumber <= 10) {
+          const canonicalVanId = `Mobile DG Van ${String(vanNumber).padStart(2, "0")} South-1`;
+          const { data: vanSite, error: vanError } = await supabase
+            .from("site_master")
+            .select("*")
+            .ilike("site_id", canonicalVanId)
+            .maybeSingle();
+          if (vanError) throw vanError;
+          site = vanSite;
+        }
+      }
+    }
+    if (!site) return NextResponse.json({ error: `Site ID or mobile DG van ${searchTerm} was not found in Master Sites.` }, { status: 404 });
 
     const [{ data: current, error: currentError }, { data: vehicles, error: vehicleError }] = await Promise.all([
-      supabase.from("site_latest").select("*").eq("site_id", siteId).maybeSingle(),
+      supabase.from("site_latest").select("*").eq("site_id", site.site_id).maybeSingle(),
       supabase.from("route_vehicles").select("*"),
     ]);
     if (currentError) throw currentError;
