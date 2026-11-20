@@ -23,6 +23,9 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .app-attribution { padding: 0 36px 18px; color: #72817d; font-size: 11px; text-align: right; }
 .app-attribution a { color: #08785d; font-weight: 700; text-decoration: none; }
 .app-attribution a:hover { text-decoration: underline; }
+.sidebar-download-link { display: flex; align-items: center; gap: 9px; min-height: 39px; margin: 0 4px 4px; padding: 0 11px; border: 1px solid rgba(111, 219, 179, .22); border-radius: 10px; color: #c9f1df; font-size: 11px; font-weight: 700; text-decoration: none; }
+.sidebar-download-link:hover { background: rgba(255, 255, 255, .08); color: white; }
+.sidebar-download-link .icon { width: 16px; height: 16px; }
 .brand-mark .drop-mark { width: 28px; height: 34px; }
 .brand-mark .drop-mark svg { width: 25px; height: 32px; }
 .sidebar-profile { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }

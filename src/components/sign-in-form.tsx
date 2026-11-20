@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError, ToastProvider, useToast } from "@/components/toast-provider";
@@ -51,6 +52,7 @@ function SignInContent() {
           <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
           <button className="primary-button" type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
         </form>
+        <Link className="login-download-link" href="/download">Download the Android app</Link>
       </section>
     </main>
   );

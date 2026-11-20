@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, ReactNode, useEffect, useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError, ToastProvider, useToast } from "@/components/toast-provider";
@@ -230,6 +231,7 @@ function DashboardContent({ profile }: { profile: Profile }) {
           {visibleNav.map((item) => <button key={item.id} className={section === item.id ? "nav-link active" : "nav-link"} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
         </nav>
         <div className="sidebar-spacer" />
+        <Link className="sidebar-download-link" href="/download"><AppIcon name="download" /><span>Download Android app</span></Link>
         <div className="sidebar-note"><strong>Karachi tower operations</strong><span>Site data, fuel records and field-team assignments in one workspace.</span></div>
         <button className="sidebar-profile" onClick={() => setSection("profile")}><span className="avatar">{displayName.trim().slice(0, 1).toUpperCase() || "U"}</span><span><span className="profile-name">{displayName}</span><span className="profile-role">{profile.role.replaceAll("_", " ")}</span></span><AppIcon name="chevron" /></button>
       </aside>
@@ -405,7 +407,7 @@ function CrewDetail({ shift, vehicle, fallback }: { shift: "Day" | "Night"; vehi
 
 function TowerIcon() { return <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 7 11 34m9-27 9 27M14 25h12M16 19h8M18 13h4M13 34h14"/><path d="M16 7a5.7 5.7 0 0 1 8 0M12.5 3.5a10.6 10.6 0 0 1 15 0"/></svg>; }
 
-type IconName = "search" | "site" | "fuel" | "vehicle" | "people" | "user" | "message" | "copy" | "chevron" | "pin" | "route" | "menu" | "close";
+type IconName = "search" | "site" | "fuel" | "vehicle" | "people" | "user" | "message" | "copy" | "chevron" | "pin" | "route" | "menu" | "close" | "download";
 function AppIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
     search: <><circle cx="10.8" cy="10.8" r="6.2" /><path d="m15.5 15.5 4.2 4.2" /></>,
@@ -421,6 +423,7 @@ function AppIcon({ name }: { name: IconName }) {
     route: <><circle cx="6" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 6h5a3 3 0 0 1 0 6h-2a3 3 0 0 0 0 6h5"/></>,
     menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
     close: <><path d="m6 6 12 12M18 6 6 18" /></>,
+    download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5M12 15V3" /></>,
   };
   return <svg className={`icon icon-${name}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
