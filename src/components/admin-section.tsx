@@ -307,7 +307,7 @@ function UserManagementPanel({ notify }: { notify: Notify }) {
   async function copyCredentials() {
     if (!createdCredentials) return;
     try {
-      await navigator.clipboard.writeText(`Fuel Ops login\nID: ${createdCredentials.username}\nPassword: ${createdCredentials.password}`);
+      await navigator.clipboard.writeText(`Search ID login\nID: ${createdCredentials.username}\nPassword: ${createdCredentials.password}`);
       notify("Login details copied. Share them directly with the staff member.", "success");
     } catch { notify("Clipboard access was blocked. Copy the ID and password manually.", "warning"); }
   }

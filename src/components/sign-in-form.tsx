@@ -42,9 +42,9 @@ function SignInContent() {
   return (
     <main className="login-wrap">
       <section className="login-panel">
-        <div className="brand-mark">F1</div>
-        <p className="eyebrow">FORMULAONE OPERATIONS</p>
-        <h1>Fuel Ops</h1>
+        <div className="brand-mark tower-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7 11 34m9-27 9 27M14 25h12M16 19h8M18 13h4M13 34h14M16 7a5.7 5.7 0 0 1 8 0M12.5 3.5a10.6 10.6 0 0 1 15 0" /></svg></div>
+        <p className="eyebrow">TOWER OPERATIONS</p>
+        <h1>Search ID</h1>
         <p className="muted">Sign in with your ID number and password.</p>
         <form onSubmit={submit} className="form-stack">
           <label>ID number or email<input name="login" autoComplete="username" inputMode="numeric" placeholder="03139090700" required /></label>

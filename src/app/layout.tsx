@@ -14,11 +14,15 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Fuel Ops",
-  description: "Tower fueling site lookup and operations",
-  applicationName: "Fuel Ops",
+  title: "Search ID | Tower Operations",
+  description: "Search ID: tower site lookup and fueling operations",
+  applicationName: "Search ID",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "Fuel Ops" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Search ID" },
+  icons: {
+    icon: [{ url: "/favicon.ico", sizes: "any" }, { url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   formatDetection: { telephone: false },
 };
 

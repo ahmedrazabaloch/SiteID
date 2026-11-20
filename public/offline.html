@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#103a35">
+  <title>Search ID · Offline</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/offline.css">
+  <script src="/offline.js" defer></script>
+</head>
+<body>
+  <main class="offline-app">
+    <header><img src="/icon.svg" alt="" width="44" height="44"><div><strong>Search ID</strong><span>Tower Operations · Offline</span></div></header>
+    <p class="offline-status">You are offline. Search uses the last data synced on this device. Changes require an internet connection.</p>
+    <form id="search-form"><label for="site-search">Site ID or mobile DG van</label><div class="search-row"><input id="site-search" autocomplete="off" placeholder="e.g. 1260 or Van 07" required><button type="submit">Search</button></div></form>
+    <p id="sync-time" class="sync-time">Checking saved data…</p>
+    <section id="site-result" class="result" hidden></section>
+    <p id="empty-state" class="empty-state" hidden></p>
+    <footer>Designed &amp; developed by <a href="https://www.linkedin.com/in/ahmedrazabaloch" target="_blank" rel="noreferrer">Ahmed Raza</a></footer>
+  </main>
+</body>
+</html>

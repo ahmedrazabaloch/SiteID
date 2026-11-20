@@ -1,11 +1,21 @@
 "use client";
 
-import { FormEvent, ReactNode, useState } from "react";
-import { AdminSection } from "@/components/admin-section";
+import { FormEvent, ReactNode, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError, ToastProvider, useToast } from "@/components/toast-provider";
+import { clearOfflineSnapshot, findOfflineSite, isOfflineSnapshotFresh, readOfflineSnapshot, saveOfflineSnapshot, type OfflineSnapshot } from "@/lib/offline-cache";
 
-type Profile = { name: string; role: string; shift: string; email: string };
+const AdminSection = dynamic(() => import("@/components/admin-section").then((module) => module.AdminSection), {
+  ssr: false,
+  loading: () => <div className="card card-pad">Loading section…</div>,
+});
+
+type Profile = { id: string; name: string; role: string; shift: string; email: string };
+type InstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
 type SiteResult = {
   site: Record<string, unknown>;
   current: Record<string, unknown> | null;
@@ -39,12 +49,74 @@ function DashboardContent({ profile }: { profile: Profile }) {
   const [targetShift, setTargetShift] = useState<"day" | "night">("day");
   const [result, setResult] = useState<SiteResult | null>(null);
   const [busy, setBusy] = useState(false);
+  const [networkOnline, setNetworkOnline] = useState(true);
+  const [offlineSyncedAt, setOfflineSyncedAt] = useState<string | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const syncOfflineData = async (force = false) => {
+      if (!navigator.onLine) return;
+      try {
+        const saved = await readOfflineSnapshot(profile.id);
+        if (saved && !force && Date.now() - Date.parse(saved.syncedAt) < 4 * 60 * 60 * 1000) {
+          if (active) setOfflineSyncedAt(saved.syncedAt);
+          return;
+        }
+        const response = await fetch("/api/offline-data", { cache: "no-store" });
+        if (!response.ok) return;
+        const snapshot = await response.json() as OfflineSnapshot;
+        await saveOfflineSnapshot(snapshot);
+        if (active) setOfflineSyncedAt(snapshot.syncedAt);
+      } catch {
+        // Offline caching is optional until one full sync has completed.
+      }
+    };
+    const updateNetwork = () => {
+      if (active) setNetworkOnline(navigator.onLine);
+      if (navigator.onLine) void syncOfflineData(true);
+    };
+    window.addEventListener("online", updateNetwork);
+    window.addEventListener("offline", updateNetwork);
+    const handleInstall = (event: Event) => {
+      event.preventDefault();
+      if (event instanceof Event) setInstallPrompt(event as InstallPromptEvent);
+    };
+    window.addEventListener("beforeinstallprompt", handleInstall);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Read current browser connectivity and cached sync state after mount.
+    setNetworkOnline(navigator.onLine);
+    void readOfflineSnapshot(profile.id).then((snapshot) => {
+      if (active && snapshot) setOfflineSyncedAt(snapshot.syncedAt);
+    }).catch(() => undefined);
+    void syncOfflineData();
+    return () => {
+      active = false;
+      window.removeEventListener("online", updateNetwork);
+      window.removeEventListener("offline", updateNetwork);
+      window.removeEventListener("beforeinstallprompt", handleInstall);
+    };
+  }, [profile.id]);
 
   async function lookup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setResult(null);
     setBusy(true);
     try {
+      if (!navigator.onLine) {
+        const snapshot = await readOfflineSnapshot(profile.id);
+        if (!snapshot || !isOfflineSnapshotFresh(snapshot)) {
+          notify("Offline site data is not synced or has expired. Connect to the internet and reopen Search ID to sync.", "warning");
+          return;
+        }
+        const cachedResult = findOfflineSite(snapshot, siteId);
+        if (!cachedResult) {
+          notify(`Site or mobile DG van ${siteId.trim()} was not found in the offline data.`, "warning");
+          return;
+        }
+        setResult(cachedResult);
+        notify(`Offline result · synced ${new Date(snapshot.syncedAt).toLocaleString()}.`, "info");
+        return;
+      }
       const response = await fetch(`/api/site-lookup?siteId=${encodeURIComponent(siteId.trim())}`);
       const body = await response.json().catch(() => null) as ({ error?: string } & SiteResult) | null;
       if (response.status === 404) { notify(body?.error || `Site ID ${siteId.trim()} was not found in Master Sites.`, "warning"); return; }
@@ -53,6 +125,19 @@ function DashboardContent({ profile }: { profile: Profile }) {
       setResult(body as SiteResult);
       notify("Site details loaded.", "success");
     } catch (cause) {
+      if (cause instanceof TypeError) {
+        try {
+          const snapshot = await readOfflineSnapshot(profile.id);
+          if (snapshot && isOfflineSnapshotFresh(snapshot)) {
+            const cachedResult = findOfflineSite(snapshot, siteId);
+            if (cachedResult) {
+              setResult(cachedResult);
+              notify(`Offline result · synced ${new Date(snapshot.syncedAt).toLocaleString()}.`, "info");
+              return;
+            }
+          }
+        } catch { /* Fall through to the standard network error toast. */ }
+      }
       notify(friendlyError(cause, "We could not look up this site. Please try again."), "error");
     } finally {
       setBusy(false);
@@ -121,6 +206,7 @@ function DashboardContent({ profile }: { profile: Profile }) {
 
   async function signOut() {
     try {
+      try { await clearOfflineSnapshot(profile.id); } catch { /* Continue with sign out even if local cleanup fails. */ }
       const supabase = createClient();
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -128,10 +214,17 @@ function DashboardContent({ profile }: { profile: Profile }) {
     } catch (cause) { notify(friendlyError(cause, "Could not sign out. Please try again."), "error"); }
   }
 
+  async function installApp() {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  }
+
   return (
     <div className="shell app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark"><DropIcon /></span><span><strong className="brand-name">Fuel Ops</strong><small className="brand-sub">Tower Operations</small></span></div>
+        <div className="brand"><span className="brand-mark"><TowerIcon /></span><span><strong className="brand-name">Search ID</strong><small className="brand-sub">Tower Operations</small></span></div>
         <div className="nav-caption">Operations</div>
         <nav className="nav" aria-label="Workspace">
           {visibleNav.map((item) => <button key={item.id} className={section === item.id ? "nav-link active" : "nav-link"} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
@@ -142,10 +235,10 @@ function DashboardContent({ profile }: { profile: Profile }) {
       </aside>
       <main className="main">
         <header className="topbar">
-          <div className="crumbs"><span>Fuel Ops</span><span className="crumb-dot" /><strong>{sectionLabel(section)}</strong></div>
-          <div className="top-actions"><div className="workspace-label"><span />Internal operations</div><button className="account-trigger" onClick={() => setSection("profile")}><span className="avatar">{displayName.trim().slice(0, 1).toUpperCase() || "U"}</span><span className="account-name">{displayName}</span><AppIcon name="chevron" /></button></div>
+          <div className="crumbs"><span>Search ID</span><span className="crumb-dot" /><strong>{sectionLabel(section)}</strong></div>
+          <div className="top-actions">{installPrompt && <button className="install-app-button" onClick={() => void installApp()}>Install app</button>}<div className={networkOnline ? "connectivity-label" : "connectivity-label is-offline"}><span />{networkOnline ? offlineSyncedAt ? "Offline data ready" : "Online · syncing" : "Offline mode"}</div><button className="account-trigger" onClick={() => setSection("profile")}><span className="avatar">{displayName.trim().slice(0, 1).toUpperCase() || "U"}</span><span className="account-name">{displayName}</span><AppIcon name="chevron" /></button></div>
         </header>
-        <div className="content">{section === "profile" ? <ProfilePanel profile={{ ...profile, name: displayName }} onNameSaved={setDisplayName} onSignOut={signOut} /> : section === "lookup" ? (
+        <div className="content">{!networkOnline && <div className="offline-notice"><strong>Offline mode</strong><span>Lookups use this device’s saved copy from {offlineSyncedAt ? new Date(offlineSyncedAt).toLocaleString() : "the last successful sync"}. Changes will not sync until you reconnect.</span></div>}{section === "profile" ? <ProfilePanel profile={{ ...profile, name: displayName }} onNameSaved={setDisplayName} onSignOut={signOut} /> : section === "lookup" ? (
             <>
               <div className="card search-card"><form className="lookup-form search-grid" onSubmit={lookup}>
                 <label>Site ID or mobile DG van<input value={siteId} onChange={(event) => setSiteId(event.target.value)} placeholder="e.g. 112 or Van 07" required /></label>
@@ -194,6 +287,7 @@ function DashboardContent({ profile }: { profile: Profile }) {
               )}
             </>
           ) : <AdminSection section={section} />}</div>
+        <footer className="app-attribution">Designed &amp; developed by <a href="https://www.linkedin.com/in/ahmedrazabaloch" target="_blank" rel="noreferrer">Ahmed Raza</a></footer>
       </main>
       <nav className="mobile-bottom-nav" aria-label="Workspace">
         {visibleNav.map((item) => <button key={item.id} className={section === item.id ? "mobile-active" : ""} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
@@ -244,9 +338,9 @@ function ProfilePanel({ profile, onNameSaved, onSignOut }: { profile: Profile; o
   return <section className="profile-page">
     <div className="profile-page-actions"><button className="btn btn-secondary" onClick={onSignOut}>Sign out</button></div>
     <div className="profile-layout">
-      <section className="card profile-summary"><div className="profile-identity"><span className="profile-avatar-large">{profile.name.trim().slice(0, 1).toUpperCase() || "U"}</span><div><h2>{profile.name}</h2><p>{profile.role.replaceAll("_", " ")} · Fuel Ops</p></div></div><div className="profile-kv"><span>Login ID</span><strong>{profile.email}</strong></div><div className="profile-kv"><span>Account role</span><strong>{profile.role.replaceAll("_", " ")}</strong></div><div className="profile-kv"><span>Account status</span><strong><span className="pill pill-green">Active</span></strong></div><div className="security-hint">Your permissions are managed through your assigned account role.</div></section>
+      <section className="card profile-summary"><div className="profile-identity"><span className="profile-avatar-large">{profile.name.trim().slice(0, 1).toUpperCase() || "U"}</span><div><h2>{profile.name}</h2><p>{profile.role.replaceAll("_", " ")} · Search ID</p></div></div><div className="profile-kv"><span>Login ID</span><strong>{profile.email}</strong></div><div className="profile-kv"><span>Account role</span><strong>{profile.role.replaceAll("_", " ")}</strong></div><div className="profile-kv"><span>Account status</span><strong><span className="pill pill-green">Active</span></strong></div><div className="security-hint">Your permissions are managed through your assigned account role.</div></section>
       <div className="profile-settings-stack">
-        <form className="card profile-form-card" onSubmit={saveName}><div className="card-title"><AppIcon name="user" />Personal details</div><div className="card-subtitle">Update the name displayed in the Fuel Ops workspace.</div><div className="form-grid" style={{ marginTop: 17 }}><label className="field field-full">Display name<input value={name} onChange={(event) => setName(event.target.value)} required maxLength={80} /></label><div><button className="btn btn-primary" disabled={busy || !name.trim()}>{busy ? "Saving…" : "Save changes"}</button></div></div></form>
+        <form className="card profile-form-card" onSubmit={saveName}><div className="card-title"><AppIcon name="user" />Personal details</div><div className="card-subtitle">Update the name displayed in the Search ID workspace.</div><div className="form-grid" style={{ marginTop: 17 }}><label className="field field-full">Display name<input value={name} onChange={(event) => setName(event.target.value)} required maxLength={80} /></label><div><button className="btn btn-primary" disabled={busy || !name.trim()}>{busy ? "Saving…" : "Save changes"}</button></div></div></form>
         <form className="card profile-form-card" onSubmit={savePassword}><div className="card-title"><AppIcon name="user" />Change password</div><div className="card-subtitle">Use at least 8 characters for your new password.</div><div className="form-grid" style={{ marginTop: 17 }}><label className="field">New password<input type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} /></label><label className="field">Confirm new password<input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} /></label><div className="field-full"><button className="btn btn-primary" disabled={busy}>{busy ? "Updating…" : "Update password"}</button></div></div></form>
       </div>
     </div>
@@ -309,7 +403,7 @@ function CrewDetail({ shift, vehicle, fallback }: { shift: "Day" | "Night"; vehi
     : <span className="info-value">{fallback}</span>}</div></div>;
 }
 
-function DropIcon() { return <svg viewBox="0 0 32 40" aria-hidden="true"><path d="M16 1.8C13 8.2 3.4 17.6 3.4 25.2A12.6 12.6 0 0 0 28.6 25C28.6 17.6 19 8.2 16 1.8Z" fill="currentColor"/><path d="M10.2 26a6.1 6.1 0 0 0 6.1 6.1" fill="none" stroke="#123b36" strokeWidth="2.3" strokeLinecap="round"/></svg>; }
+function TowerIcon() { return <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 7 11 34m9-27 9 27M14 25h12M16 19h8M18 13h4M13 34h14"/><path d="M16 7a5.7 5.7 0 0 1 8 0M12.5 3.5a10.6 10.6 0 0 1 15 0"/></svg>; }
 
 type IconName = "search" | "site" | "fuel" | "vehicle" | "people" | "user" | "message" | "copy" | "chevron" | "pin" | "route" | "menu" | "close";
 function AppIcon({ name }: { name: IconName }) {

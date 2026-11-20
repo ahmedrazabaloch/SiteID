@@ -10,6 +10,19 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .sidebar .brand > span:last-child { display: grid; gap: 2px; min-width: 0; }
 .sidebar .brand-mark { flex: 0 0 39px; }
 .sidebar .brand-mark > svg { width: 24px; height: 30px; }
+.tower-brand-mark svg { width: 30px; height: 30px; }
+.connectivity-label { display: inline-flex; align-items: center; gap: 7px; color: #42635a; font-size: 11px; white-space: nowrap; }
+.connectivity-label > span { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #16a875; box-shadow: 0 0 0 3px #e4f5ee; }
+.connectivity-label.is-offline { color: #876124; }
+.connectivity-label.is-offline > span { background: #d49325; box-shadow: 0 0 0 3px #fff4df; }
+.install-app-button { min-height: 34px; padding: 0 11px; border: 1px solid #cddfd8; border-radius: 9px; background: #fff; color: #075f4d; font-weight: 700; font-size: 11px; }
+.install-app-button:hover { background: #f1faf6; }
+.offline-notice { display: grid; gap: 4px; margin: 0 0 16px; padding: 12px 15px; border: 1px solid #ecdcb9; border-radius: 11px; background: #fff9ed; color: #735522; }
+.offline-notice strong { font-size: 12px; }
+.offline-notice span { font-size: 11px; line-height: 1.5; }
+.app-attribution { padding: 0 36px 18px; color: #72817d; font-size: 11px; text-align: right; }
+.app-attribution a { color: #08785d; font-weight: 700; text-decoration: none; }
+.app-attribution a:hover { text-decoration: underline; }
 .brand-mark .drop-mark { width: 28px; height: 34px; }
 .brand-mark .drop-mark svg { width: 25px; height: 32px; }
 .sidebar-profile { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
@@ -309,6 +322,8 @@ body.user-editor-open { overflow: hidden; }
 }
 
 @media (max-width: 640px) {
+  .app-attribution { padding: 4px 14px calc(82px + env(safe-area-inset-bottom)); text-align: center; }
+  .connectivity-label { display: none; }
   .site-list-controls { align-items: end; }
   .site-search { min-width: 0; }
   .site-list-title { align-self: flex-start; white-space: normal; }
