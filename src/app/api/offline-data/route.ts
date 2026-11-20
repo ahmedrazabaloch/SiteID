@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+const privateNoStore = { "Cache-Control": "private, no-store, max-age=0" };
 
 async function loadAll<T>(readPage: (from: number, to: number) => Promise<{ data: T[] | null; error: { message: string } | null }>) {
   const rows: T[] = [];
@@ -19,11 +20,11 @@ export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Sign in required to sync offline data." }, { status: 401 });
+    if (!user) return NextResponse.json({ error: "Sign in required to sync offline data." }, { status: 401, headers: privateNoStore });
 
     const { data: profile, error: profileError } = await supabase.from("profiles").select("is_active").eq("id", user.id).maybeSingle();
     if (profileError) throw new Error("Could not verify your account.");
-    if (!profile?.is_active) return NextResponse.json({ error: "This account is inactive." }, { status: 403 });
+    if (!profile?.is_active) return NextResponse.json({ error: "This account is inactive." }, { status: 403, headers: privateNoStore });
 
     const [sites, fuel, vehicles] = await Promise.all([
       loadAll<Record<string, unknown>>(async (from, to) => await supabase.from("site_master")
@@ -37,12 +38,12 @@ export async function GET() {
     ]);
 
     return NextResponse.json({ userId: user.id, syncedAt: new Date().toISOString(), sites, fuel, vehicles }, {
-      headers: { "Cache-Control": "private, no-store, max-age=0" },
+      headers: privateNoStore,
     });
   } catch {
     return NextResponse.json({ error: "Could not sync offline data. Please try again when connected." }, {
       status: 500,
-      headers: { "Cache-Control": "private, no-store, max-age=0" },
+      headers: privateNoStore,
     });
   }
 }
