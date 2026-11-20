@@ -165,10 +165,10 @@ function DashboardContent({ profile }: { profile: Profile }) {
                       <div className="contact-detail-grid contact-grid-three">
                         <DetailRow icon="user" label="Cluster Owner" value={contactValue(site.cluster_owner_name, site.cluster_owner_phone)} />
                         <DetailRow icon="user" label="Night On-Caller" value={contactValue(site.night_on_caller_name, site.night_on_caller_phone)} />
-                        <DetailRow icon="people" label="I-Engineering lead" value={contactValue(site.ie_lead_name, site.ie_lead_phone)} />
+                        <DetailRow icon="people" label="I-Engineering lead" value={contactValue(site.ie_lead_name, site.ie_lead_phone, "N/A")} />
                       </div>
                       <div className="contact-detail-grid contact-grid-two">
-                      <DetailRow icon="people" label="Zong lead" value={contactValue(site.zong_lead_name, site.zong_lead_phone)} />
+                      <DetailRow icon="people" label="Zong lead" value={contactValue(site.zong_lead_name, site.zong_lead_phone, "N/A")} />
                       <DetailRow icon="people" label="Security SO" value={contactValue(site.security_so_name, site.security_so_phone)} />
                       </div>
                       <div className="site-additional-notes"><span className="info-icon"><AppIcon name="message" /></span><div><span className="info-label">Additional Notes</span><p className="info-value">{String(site.other_notes ?? "").trim() || "No additional notes provided."}</p></div></div>
@@ -274,8 +274,19 @@ function formatFuelingDate(value: unknown) {
   const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
   return `${Number(day)}-${monthNames[Number(month) - 1]}-${year}`;
 }
-function contactValue(name: unknown, phone: unknown) {
-  return [name, phone].filter(Boolean).join(" / ") || "Not provided";
+function contactValue(name: unknown, phone: unknown, fallback = "Not provided") {
+  const parts = [name, phone].map((value) => {
+    if (value && typeof value === "object") {
+      const cell = value as { text?: unknown; result?: unknown; richText?: { text?: unknown }[] };
+      if (typeof cell.text === "string") value = cell.text;
+      else if (cell.result !== undefined && (typeof cell.result === "string" || typeof cell.result === "number")) value = cell.result;
+      else if (cell.richText) value = cell.richText.map((part) => typeof part.text === "string" ? part.text : "").join("");
+      else return "";
+    }
+    const text = String(value ?? "").trim();
+    return /^\[object object\]$/i.test(text) ? "" : text;
+  }).filter(Boolean);
+  return parts.join(" / ") || fallback;
 }
 
 function normalizeArea(value: unknown) {

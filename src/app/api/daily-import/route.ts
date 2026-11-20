@@ -26,7 +26,7 @@ function meterStatus(value: unknown): string | null {
   if (status.includes("replace") || status.includes("change")) return "replaced";
   if (status.includes("missing") || status === "no meter") return "missing";
   if (status.includes("fault") || status.includes("not working") || status.includes("damage")) return "faulty";
-  if (status === "working" || status === "ok" || status === "yes") return "working";
+  if (status === "working" || status === "running" || status === "ok" || status === "yes") return "working";
   return "unknown";
 }
 function asDate(value: unknown): string | null {
