@@ -21,10 +21,11 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .offline-notice { display: grid; gap: 4px; margin: 0 0 16px; padding: 12px 15px; border: 1px solid #ecdcb9; border-radius: 11px; background: #fff9ed; color: #735522; }
 .offline-notice strong { font-size: 12px; }
 .offline-notice span { font-size: 11px; line-height: 1.5; }
-.app-attribution { color: #72817d; font-size: 11px; line-height: 1.5; }
-.desktop-attribution { padding: 8px 8px 14px; text-align: center; }
+.app-attribution { border: 1px solid transparent; border-radius: 10px; font-size: 11px; line-height: 1.5; }
+.desktop-attribution { margin: 0 4px 7px; padding: 9px 11px; border-color: rgba(99, 234, 185, .18); background: rgba(31, 202, 143, .1); color: #b6d8cc; font-size: 10px; text-align: left; }
 .mobile-attribution { display: none; }
 .app-attribution a { color: #08785d; font-weight: 700; text-decoration: none; }
+.desktop-attribution a { color: #70ddb2; }
 .app-attribution a:hover { text-decoration: underline; }
 .sidebar-download-link { display: flex; align-items: center; gap: 9px; min-height: 39px; margin: 0 4px 4px; padding: 0 11px; border: 1px solid rgba(111, 219, 179, .22); border-radius: 10px; color: #c9f1df; font-size: 11px; font-weight: 700; text-decoration: none; }
 .sidebar-download-link:hover { background: rgba(255, 255, 255, .08); color: white; }
@@ -257,7 +258,7 @@ body.user-editor-open { overflow: hidden; }
   .app-shell > .main { grid-column: 1; height: auto; min-height: 100vh; overflow: visible; }
   .app-shell > .mobile-bottom-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .desktop-attribution { display: none; }
-  .mobile-attribution { display: block; grid-column: 1; padding: 12px 14px calc(18px + env(safe-area-inset-bottom)); text-align: center; }
+  .mobile-attribution { display: block; grid-column: 1; width: fit-content; max-width: calc(100% - 28px); margin: 12px auto 0; padding: 9px 14px calc(9px + env(safe-area-inset-bottom)); border-color: #d5e8df; background: #eaf6f1; color: #64766f; text-align: center; }
   .topbar { justify-content: space-between; }
   .top-actions .account-name, .top-actions .account-trigger > .icon { display: none; }
   .top-actions .account-trigger { min-height: auto; padding: 3px; border: 0; }

@@ -231,8 +231,8 @@ function DashboardContent({ profile }: { profile: Profile }) {
         </nav>
         <div className="sidebar-spacer" />
         <Link className="sidebar-download-link" href="/download"><AppIcon name="download" /><span>Download Android app</span></Link>
-        <footer className="app-attribution desktop-attribution">Designed &amp; developed by <a href="https://www.linkedin.com/in/ahmedrazabaloch" target="_blank" rel="noreferrer">Ahmed Raza</a></footer>
         <div className="sidebar-note"><strong>Karachi tower operations</strong><span>Site data, fuel records and field-team assignments in one workspace.</span></div>
+        <footer className="app-attribution desktop-attribution">Designed &amp; developed by <a href="https://www.linkedin.com/in/ahmedrazabaloch" target="_blank" rel="noreferrer">Ahmed Raza</a></footer>
         <button className="sidebar-profile" onClick={() => setSection("profile")}><span className="avatar">{displayName.trim().slice(0, 1).toUpperCase() || "U"}</span><span><span className="profile-name">{displayName}</span><span className="profile-role">{profile.role.replaceAll("_", " ")}</span></span><AppIcon name="chevron" /></button>
       </aside>
       <main className="main">
