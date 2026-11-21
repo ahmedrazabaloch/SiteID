@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -12,11 +13,7 @@ export default function DownloadPage() {
     <main className={styles.page}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="Search ID home">
-          <span className={styles.brandIcon} aria-hidden="true">
-            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 7 11 34m9-27 9 27M14 25h12M16 19h8M18 13h4M13 34h14M16 7a5.7 5.7 0 0 1 8 0M12.5 3.5a10.6 10.6 0 0 1 15 0" />
-            </svg>
-          </span>
+          <Image className={styles.brandIcon} src="/icon-192.png" alt="" width={42} height={42} priority />
           <span><strong>Search ID</strong><small>Tower Operations</small></span>
         </Link>
         <Link href="/" className={styles.backLink}>Back to Search ID</Link>
@@ -37,7 +34,7 @@ export default function DownloadPage() {
         <div className={styles.preview} aria-hidden="true">
           <div className={styles.phone}>
             <div className={styles.phoneTop}><span /><i /></div>
-            <div className={styles.appMark}><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7 11 34m9-27 9 27M14 25h12M16 19h8M18 13h4M13 34h14M16 7a5.7 5.7 0 0 1 8 0M12.5 3.5a10.6 10.6 0 0 1 15 0" /></svg></div>
+            <Image className={styles.appMark} src="/icon-192.png" alt="" width={49} height={49} />
             <strong>Search ID</strong><small>Tower Operations</small>
             <div className={styles.searchCard}><span>Site ID</span><b>1260</b><div>Find site <span>⌕</span></div></div>
             <div className={styles.resultCard}><span>F1 Zone</span><b>North Karachi</b><span>Day Vehicle Crew</span><b>Driver: Haji M. · Supervisor: Asif</b></div>

@@ -9,8 +9,9 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .sidebar .brand { padding-bottom: 30px; }
 .sidebar .brand > span:last-child { display: grid; gap: 2px; min-width: 0; }
 .sidebar .brand-mark { flex: 0 0 39px; }
-.sidebar .brand-mark > svg { width: 24px; height: 30px; }
-.tower-brand-mark svg { width: 30px; height: 30px; }
+.sidebar .brand-icon-mark img { display: block; width: 39px; height: 39px; border-radius: 11px; object-fit: cover; }
+.login-logo-mark { overflow: hidden; padding: 0; }
+.login-logo-mark img { display: block; width: 50px; height: 50px; border-radius: 13px; object-fit: cover; }
 .connectivity-label { display: inline-flex; align-items: center; gap: 7px; color: #42635a; font-size: 11px; white-space: nowrap; }
 .connectivity-label > span { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #16a875; box-shadow: 0 0 0 3px #e4f5ee; }
 .connectivity-label.is-offline { color: #876124; }

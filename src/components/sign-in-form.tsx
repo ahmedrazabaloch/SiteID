@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError, ToastProvider, useToast } from "@/components/toast-provider";
@@ -43,7 +44,7 @@ function SignInContent() {
   return (
     <main className="login-wrap">
       <section className="login-panel">
-        <div className="brand-mark tower-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7 11 34m9-27 9 27M14 25h12M16 19h8M18 13h4M13 34h14M16 7a5.7 5.7 0 0 1 8 0M12.5 3.5a10.6 10.6 0 0 1 15 0" /></svg></div>
+        <div className="brand-mark login-logo-mark"><Image src="/icon-512.png" alt="" width={50} height={50} priority /></div>
         <p className="eyebrow">TOWER OPERATIONS</p>
         <h1>Search ID</h1>
         <p className="muted">Sign in with your ID number and password.</p>

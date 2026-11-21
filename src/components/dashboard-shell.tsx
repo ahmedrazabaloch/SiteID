@@ -2,6 +2,7 @@
 
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError, ToastProvider, useToast } from "@/components/toast-provider";
@@ -225,7 +226,7 @@ function DashboardContent({ profile }: { profile: Profile }) {
   return (
     <div className="shell app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark"><TowerIcon /></span><span><strong className="brand-name">Search ID</strong><small className="brand-sub">Tower Operations</small></span></div>
+        <div className="brand"><span className="brand-mark brand-icon-mark"><Image src="/icon-192.png" alt="" width={39} height={39} priority /></span><span><strong className="brand-name">Search ID</strong><small className="brand-sub">Tower Operations</small></span></div>
         <div className="nav-caption">Operations</div>
         <nav className="nav" aria-label="Workspace">
           {visibleNav.map((item) => <button key={item.id} className={section === item.id ? "nav-link active" : "nav-link"} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
@@ -404,8 +405,6 @@ function CrewDetail({ shift, vehicle, fallback }: { shift: "Day" | "Night"; vehi
     ? <span className="info-value">Driver: <strong>{String(vehicle.driver || "Not set")}</strong> · Supervisor: <strong>{String(vehicle.fueler_supervisor || "Not set")}</strong></span>
     : <span className="info-value">{fallback}</span>}</div></div>;
 }
-
-function TowerIcon() { return <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 7 11 34m9-27 9 27M14 25h12M16 19h8M18 13h4M13 34h14"/><path d="M16 7a5.7 5.7 0 0 1 8 0M12.5 3.5a10.6 10.6 0 0 1 15 0"/></svg>; }
 
 type IconName = "search" | "site" | "fuel" | "vehicle" | "people" | "user" | "message" | "copy" | "chevron" | "pin" | "route" | "menu" | "close" | "download";
 function AppIcon({ name }: { name: IconName }) {

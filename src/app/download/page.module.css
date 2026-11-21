@@ -17,7 +17,8 @@
 
 .brand { display: flex; align-items: center; gap: 11px; color: #14252d; text-decoration: none; }
 .brandIcon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 13px; background: #103a35; color: #27cc92; }
-.brandIcon svg { width: 27px; height: 27px; }
+.brandIcon { overflow: hidden; padding: 0; }
+.brandIcon img { display: block; width: 42px; height: 42px; border-radius: 12px; object-fit: cover; }
 .brand > span:last-child { display: grid; gap: 2px; }
 .brand strong { font-size: 17px; }
 .brand small { color: #60717d; font-size: 11px; }
@@ -54,7 +55,7 @@
 .phoneTop span { width: 55px; height: 5px; border-radius: 9px; background: #173a35; }
 .phoneTop i { position: absolute; right: 20px; width: 6px; height: 6px; border-radius: 50%; background: #9db5ad; }
 .appMark { display: grid; width: 49px; height: 49px; place-items: center; margin-bottom: 9px; border-radius: 15px; background: #103a35; color: #27cc92; }
-.appMark svg { width: 31px; height: 31px; }
+.appMark { object-fit: cover; }
 .phone > strong { font-size: 15px; }
 .phone > small { margin-top: 3px; color: #74827f; font-size: 10px; }
 .searchCard, .resultCard { display: grid; width: 100%; gap: 7px; padding: 12px; border: 1px solid #e1eae6; border-radius: 10px; background: #fff; }
