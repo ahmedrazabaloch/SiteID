@@ -21,7 +21,9 @@ h1, h2, h3, .card-title, .section-title, .crumbs strong, .nav-link span, .mobile
 .offline-notice { display: grid; gap: 4px; margin: 0 0 16px; padding: 12px 15px; border: 1px solid #ecdcb9; border-radius: 11px; background: #fff9ed; color: #735522; }
 .offline-notice strong { font-size: 12px; }
 .offline-notice span { font-size: 11px; line-height: 1.5; }
-.app-attribution { padding: 0 36px 18px; color: #72817d; font-size: 11px; text-align: right; }
+.app-attribution { color: #72817d; font-size: 11px; line-height: 1.5; }
+.desktop-attribution { padding: 8px 8px 14px; text-align: center; }
+.mobile-attribution { display: none; }
 .app-attribution a { color: #08785d; font-weight: 700; text-decoration: none; }
 .app-attribution a:hover { text-decoration: underline; }
 .sidebar-download-link { display: flex; align-items: center; gap: 9px; min-height: 39px; margin: 0 4px 4px; padding: 0 11px; border: 1px solid rgba(111, 219, 179, .22); border-radius: 10px; color: #c9f1df; font-size: 11px; font-weight: 700; text-decoration: none; }
@@ -254,6 +256,8 @@ body.user-editor-open { overflow: hidden; }
   .app-shell { display: grid; grid-template-columns: minmax(0, 1fr); height: auto; min-height: 100vh; overflow: visible; }
   .app-shell > .main { grid-column: 1; height: auto; min-height: 100vh; overflow: visible; }
   .app-shell > .mobile-bottom-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .desktop-attribution { display: none; }
+  .mobile-attribution { display: block; grid-column: 1; padding: 12px 14px calc(18px + env(safe-area-inset-bottom)); text-align: center; }
   .topbar { justify-content: space-between; }
   .top-actions .account-name, .top-actions .account-trigger > .icon { display: none; }
   .top-actions .account-trigger { min-height: auto; padding: 3px; border: 0; }
@@ -326,7 +330,6 @@ body.user-editor-open { overflow: hidden; }
 }
 
 @media (max-width: 640px) {
-  .app-attribution { padding: 4px 14px calc(82px + env(safe-area-inset-bottom)); text-align: center; }
   .connectivity-label { display: none; }
   .site-list-controls { align-items: end; }
   .site-search { min-width: 0; }
