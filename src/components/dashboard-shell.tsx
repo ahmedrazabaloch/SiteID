@@ -189,11 +189,9 @@ function DashboardContent({ profile }: { profile: Profile }) {
     ? [
         `Fuel Request — Site ${String(site.site_id ?? siteId)}`,
         `Requested fuel: ${litres.trim() ? `${litres.trim()} L` : "[L]"}`,
-        "FormulaOne team: " + (targetShift === "day" ? dayTeam : nightTeam),
-        `Route: ${route}`,
-        "Day team: " + dayTeam,
-        "Night team: " + nightTeam,
-        `${result.contact.label}: ${result.contact.name ?? "Not set"}${result.contact.phone ? ` / ${result.contact.phone}` : ""}`,
+        `Route: ${String(site.f1_zone ?? site.site_area ?? "Not set")}`,
+        `Day team: ${vehicleCrewNames(dayVehicle)}`,
+        `Night team: ${vehicleCrewNames(nightVehicle)}`,
       ].join("\n")
     : "";
 
@@ -390,6 +388,18 @@ function contactValue(name: unknown, phone: unknown, fallback = "Not provided") 
 function normalizeArea(value: unknown) {
   const normalized = String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
   return normalized === "northn" ? "northnazimabad" : normalized;
+}
+
+function vehicleCrewNames(vehicle: Record<string, unknown> | undefined) {
+  if (!vehicle) return "Not assigned";
+  const driver = displayText(vehicle.driver) || "Not assigned";
+  const supervisor = displayText(vehicle.fueler_supervisor) || "Not assigned";
+  return `${driver}, ${supervisor}`;
+}
+
+function displayText(value: unknown) {
+  if (typeof value === "string" || typeof value === "number") return String(value).trim();
+  return "";
 }
 
 function meterLabel(value: unknown) {
