@@ -48,7 +48,6 @@ function DashboardContent({ profile }: { profile: Profile }) {
   const [section, setSection] = useState<Section>("lookup");
   const [siteId, setSiteId] = useState("");
   const [litres, setLitres] = useState("");
-  const [targetShift, setTargetShift] = useState<"day" | "night">("day");
   const [result, setResult] = useState<SiteResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [networkOnline, setNetworkOnline] = useState(true);
@@ -173,18 +172,6 @@ function DashboardContent({ profile }: { profile: Profile }) {
   }
   const dayVehicle = assignedVehicle("day");
   const nightVehicle = assignedVehicle("night");
-  const activeVehicle = targetShift === "day" ? dayVehicle : nightVehicle;
-  const routeFor = (shift: "day" | "night", vehicle: Record<string, unknown> | undefined) => {
-    const saved = String(site[shift === "day" ? "day_route" : "night_route"] ?? "");
-    if (saved) return saved;
-    if (!vehicle && shift === "night" && f1Zone === "northkarachi") return "No vehicle assigned";
-    return String(vehicle?.route ?? site.f1_zone ?? "Route not set");
-  };
-  const teamFor = (shift: "day" | "night", vehicle: Record<string, unknown> | undefined) =>
-    String(site[shift === "day" ? "day_team" : "night_team"] || vehicle?.team || vehicle?.route || "Not assigned");
-  const route = routeFor(targetShift, activeVehicle);
-  const dayTeam = teamFor("day", dayVehicle);
-  const nightTeam = teamFor("night", nightVehicle);
   const message = result
     ? [
         `Fuel Request — Site ${String(site.site_id ?? siteId)}`,
@@ -280,9 +267,7 @@ function DashboardContent({ profile }: { profile: Profile }) {
                       <Value label="Average consumption" value={formatValue(current.average_consumption, " L/h")} highlight />
                     </div></section>
                   </div>
-                  <div className="message-section card forward-card"><div className="message-head forward-head"><div><h3 className="section-title forward-title"><AppIcon name="message" />Prepare fuel request</h3><p className="muted forward-sub">Review, copy and paste this request into WhatsApp manually.</p></div>
-                    <label>Team to notify<select value={targetShift} onChange={(event) => setTargetShift(event.target.value as "day" | "night")}><option value="day">Day team</option><option value="night">Night team</option></select></label>
-                  </div>
+                  <div className="message-section card forward-card"><div className="message-head forward-head"><div><h3 className="section-title forward-title"><AppIcon name="message" />Prepare fuel request</h3><p className="muted forward-sub">Review, copy and paste this request into WhatsApp manually.</p></div></div>
                     <div className="message-preview forward-body"><pre>{message}</pre><button type="button" className="btn btn-secondary copy-button" onClick={copyMessage}><AppIcon name="copy" />Copy message</button></div>
                   </div>
                 </section>
