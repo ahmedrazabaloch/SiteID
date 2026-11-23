@@ -212,6 +212,19 @@ function VehiclePanel({ notify }: { notify: Notify }) {
         </form>
       </section>
     </div>}
+    <div className="vehicle-mobile-list" aria-label="Vehicle assignments">
+      {vehicles.map((vehicle) => <article className="vehicle-mobile-card" key={`mobile-${vehicle.route}-${vehicle.field_shift}`}>
+        <div className="vehicle-mobile-card-head"><span className={`duty-tag duty-${vehicle.field_shift}`}>{vehicle.field_shift === "day" ? "Day" : "Night"}</span><strong>{vehicle.vehicle_number}</strong></div>
+        <div className="vehicle-mobile-grid">
+          <div className="vehicle-mobile-field"><span>Zone area</span><strong>{vehicle.route}</strong></div>
+          <div className="vehicle-mobile-field"><span>FormulaOne team</span><strong>{vehicle.team || vehicle.route}</strong></div>
+          <div className="vehicle-mobile-field"><span>Driver</span><strong>{vehicle.driver || "—"}</strong></div>
+          <div className="vehicle-mobile-field"><span>Supervisor</span><strong>{vehicle.fueler_supervisor || "—"}</strong></div>
+        </div>
+        <div className="vehicle-mobile-actions"><button className="edit-button" type="button" onClick={() => editVehicle(vehicle)}>Edit assignment</button></div>
+      </article>)}
+      {!vehicles.length && <div className="vehicle-mobile-empty">{loading ? "Loading vehicle assignments…" : "No vehicle assignments yet. Add the first vehicle above."}</div>}
+    </div>
     <div className="table-wrap vehicle-table"><table><thead><tr><th>Duty</th><th>FormulaOne team</th><th>Vehicle number</th><th>Zone area</th><th>Driver</th><th>Supervisor</th><th><span className="visually-hidden">Actions</span></th></tr></thead><tbody>
       {vehicles.map((vehicle) => <tr key={`${vehicle.route}-${vehicle.field_shift}`}><td><span className={`duty-tag duty-${vehicle.field_shift}`}>{vehicle.field_shift === "day" ? "Day" : "Night"}</span></td><td>{vehicle.team || vehicle.route}</td><td><strong>{vehicle.vehicle_number}</strong></td><td>{vehicle.route}</td><td>{vehicle.driver || "—"}</td><td>{vehicle.fueler_supervisor || "—"}</td><td><button className="edit-button" type="button" onClick={() => editVehicle(vehicle)}>Edit</button></td></tr>)}
       {!vehicles.length && <tr><td colSpan={7}>{loading ? "Loading vehicle assignments…" : "No vehicle assignments yet. Add the first vehicle above."}</td></tr>}

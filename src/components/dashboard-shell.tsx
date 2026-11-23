@@ -277,8 +277,8 @@ function DashboardContent({ profile }: { profile: Profile }) {
       </main>
       <nav className="mobile-bottom-nav" aria-label="Workspace">
         {visibleNav.map((item) => <button key={item.id} className={section === item.id ? "mobile-active" : ""} onClick={() => setSection(item.id)}><AppIcon name={item.icon} /><span>{item.label}</span></button>)}
+        <footer className="app-attribution mobile-attribution">Designed &amp; developed by <a href="https://www.linkedin.com/in/ahmedrazabaloch" target="_blank" rel="noreferrer">Ahmed Raza</a></footer>
       </nav>
-      <footer className="app-attribution mobile-attribution">Designed &amp; developed by <a href="https://www.linkedin.com/in/ahmedrazabaloch" target="_blank" rel="noreferrer">Ahmed Raza</a></footer>
     </div>
   );
 }
