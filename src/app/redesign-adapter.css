@@ -288,7 +288,8 @@ body.user-editor-open { overflow: hidden; }
   .app-shell > .mobile-bottom-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .app-shell > .mobile-bottom-nav { z-index: 100; }
   .desktop-attribution { display: none; }
-  .mobile-attribution { display: block; grid-column: 1 / -1; width: auto; max-width: none; margin: 0; padding: 6px 6px 1px; border: 0; border-top: 1px solid rgba(207, 222, 216, .75); border-radius: 0; background: transparent; color: #64766f; text-align: center; }
+  .mobile-attribution { display: block; grid-column: 1 / -1; width: auto; max-width: none; margin: 0; padding: 6px 11px 1px; border: 0; border-top: 1px solid rgba(207, 222, 216, .75); border-radius: 0; background: transparent; color: #64766f; font-size: 11px; line-height: 1.4; text-align: center; white-space: nowrap; }
+  .mobile-attribution a { display: inline; align-items: initial; flex-direction: initial; justify-content: initial; gap: normal; padding: 0; border-radius: 0; font-size: inherit; }
   .topbar { justify-content: space-between; }
   .top-actions .account-name, .top-actions .account-trigger > .icon { display: none; }
   .top-actions .account-trigger { min-height: auto; padding: 3px; border: 0; }
