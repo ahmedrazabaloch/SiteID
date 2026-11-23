@@ -31,10 +31,10 @@ export function SiteLocationMap({ siteId, latitude, longitude, online }: SiteLoc
     L.control.zoom({ position: "bottomright" }).addTo(map);
     const marker = L.marker([latitude, longitude], {
       icon: L.divIcon({
-        className: "site-map-pin-wrap",
-        html: '<span class="site-map-pin" aria-hidden="true"></span>',
-        iconSize: [32, 40],
-        iconAnchor: [16, 38],
+        className: "site-map-marker-wrap",
+        html: `<span class="site-map-marker"><span class="site-map-marker-label">${escapeHtml(siteId)}</span><span class="site-map-marker-pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 21 6-18 6 18M8 15h8M9.5 10h5M11 5h2M4 21h16M8.2 14.5l7.6-4.2m-7.6 0 7.6 4.2M6.8 18h10.4"/><path d="M8 3.5a6 6 0 0 1 8 0M5.5 1a10 10 0 0 1 13 0"/></svg></span></span>`,
+        iconSize: [82, 74],
+        iconAnchor: [41, 72],
       }),
       title: `Site ${siteId}`,
       alt: `Site ${siteId} location`,
@@ -72,6 +72,10 @@ export function SiteLocationMap({ siteId, latitude, longitude, online }: SiteLoc
       )}
     </section>
   );
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] ?? character);
 }
 
 function LocationArrowIcon() {
