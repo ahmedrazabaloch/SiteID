@@ -3,6 +3,7 @@ import { Roboto } from "next/font/google";
 import "./globals.css";
 import "./redesign-prototype.css";
 import "./redesign-adapter.css";
+import "leaflet/dist/leaflet.css";
 import { ServiceWorker } from "@/components/service-worker";
 import { Analytics } from "@vercel/analytics/next";
 

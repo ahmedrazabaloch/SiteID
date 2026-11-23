@@ -12,6 +12,10 @@ const AdminSection = dynamic(() => import("@/components/admin-section").then((mo
   ssr: false,
   loading: () => <div className="card card-pad">Loading section…</div>,
 });
+const SiteLocationMap = dynamic(() => import("@/components/site-location-map").then((module) => module.SiteLocationMap), {
+  ssr: false,
+  loading: () => <div className="site-map-loading" aria-label="Loading site map" />,
+});
 
 type Profile = { id: string; name: string; role: string; shift: string; email: string };
 type InstallPromptEvent = Event & {
@@ -240,6 +244,17 @@ function DashboardContent({ profile }: { profile: Profile }) {
                     <section className="card"><div className="card-header"><div><div className="card-title"><AppIcon name="site" />Site details</div><div className="card-subtitle">Location, field crews and client contacts</div></div><span className="pill pill-gray site-id-badge">ID {String(site.site_id ?? "")}</span></div><div className="site-detail-list info-list">
                       <DetailRow icon="pin" label="Site address" value={[site.address, site.site_area].filter(Boolean).join(", ") || "Address not set"} />
                       <DetailRow icon="route" label="F1 zone" value={String(site.f1_zone ?? "Not set")} />
+                      {isCoordinate(site.latitude) && isCoordinate(site.longitude) && (
+                        <SiteLocationMap
+                          siteId={String(site.site_id ?? "")}
+                          latitude={Number(site.latitude)}
+                          longitude={Number(site.longitude)}
+                          online={networkOnline}
+                        />
+                      )}
+                      {(!isCoordinate(site.latitude) || !isCoordinate(site.longitude)) && (
+                        <div className="site-location-unavailable"><span className="info-icon"><AppIcon name="pin" /></span><span>Map coordinates are not available for this site.</span></div>
+                      )}
                       <div className="crew-detail-grid">
                         <CrewDetail shift="Day" vehicle={dayVehicle} fallback="Not assigned" />
                         <CrewDetail shift="Night" vehicle={nightVehicle} fallback={f1Zone === "northkarachi" ? "No Night vehicle assigned" : "Not assigned"} />
@@ -373,6 +388,12 @@ function contactValue(name: unknown, phone: unknown, fallback = "Not provided") 
 function normalizeArea(value: unknown) {
   const normalized = String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
   return normalized === "northn" ? "northnazimabad" : normalized;
+}
+
+function isCoordinate(value: unknown) {
+  if (value === null || value === undefined || value === "") return false;
+  const coordinate = Number(value);
+  return Number.isFinite(coordinate);
 }
 
 function vehicleCrewNames(vehicle: Record<string, unknown> | undefined) {

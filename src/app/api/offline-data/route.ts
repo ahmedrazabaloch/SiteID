@@ -28,7 +28,7 @@ export async function GET() {
 
     const [sites, fuel, vehicles] = await Promise.all([
       loadAll<Record<string, unknown>>(async (from, to) => await supabase.from("site_master")
-        .select("site_id,address,site_area,f1_zone,day_team,day_route,day_driver,day_fueler,night_team,night_route,night_driver,night_fueler,cluster_owner_name,cluster_owner_phone,night_on_caller_name,night_on_caller_phone,ie_lead_name,ie_lead_phone,zong_lead_name,zong_lead_phone,security_so_name,security_so_phone,other_notes")
+        .select("site_id,address,site_area,f1_zone,latitude,longitude,day_team,day_route,day_driver,day_fueler,night_team,night_route,night_driver,night_fueler,cluster_owner_name,cluster_owner_phone,night_on_caller_name,night_on_caller_phone,ie_lead_name,ie_lead_phone,zong_lead_name,zong_lead_phone,security_so_name,security_so_phone,other_notes")
         .order("site_id").range(from, to)),
       loadAll<Record<string, unknown>>(async (from, to) => await supabase.from("site_latest")
         .select("site_id,fueling_date,available_fuel,fuel_poured,total_fuel,dg_meter_status,previous_reading,current_reading,running_hours,average_consumption")

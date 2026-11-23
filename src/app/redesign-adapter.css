@@ -245,6 +245,32 @@ body.user-editor-open { overflow: hidden; }
 .toast-warning { border-color: #f0dfb8; }
 .toast-error { border-color: #f0d0cd; }
 
+.site-location-card { display: grid; gap: 10px; margin: 14px 0; padding: 12px; border: 1px solid var(--line-2); border-radius: 12px; background: #fbfdfc; }
+.site-location-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.site-location-heading > div { display: grid; gap: 3px; min-width: 0; }
+.site-location-heading strong { color: #193a32; font-size: 13px; }
+.site-location-heading > div > span { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.site-directions-link { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 0 12px; border: 1px solid #087b61; border-radius: 9px; background: #087b61; color: #fff; font-size: 12px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 10px rgba(8, 125, 104, .12); }
+.site-directions-link:hover { background: #066b54; }
+.site-directions-link svg { width: 16px; height: 16px; }
+.site-map-frame { overflow: hidden; border: 1px solid #dce8e3; border-radius: 9px; background: #edf3f0; }
+.site-map-canvas, .site-map-loading { width: 100%; height: 220px; background: #edf3f0; }
+.site-map-loading { margin: 14px 0; border: 1px solid var(--line-2); border-radius: 12px; }
+.site-map-pin-wrap { display: grid; place-items: start center; border: 0; background: transparent; }
+.site-map-pin { position: relative; display: block; width: 25px; height: 25px; border: 3px solid white; border-radius: 50% 50% 50% 0; background: #07805f; box-shadow: 0 2px 8px rgba(9, 45, 37, .35); transform: rotate(-45deg); }
+.site-map-pin::after { position: absolute; inset: 6px; border-radius: 50%; background: white; content: ""; }
+.site-map-attribution { margin: -3px 1px 0; color: #6b7b75; font-size: 10px; line-height: 1.3; }
+.site-map-offline-label { padding: 5px 8px; border-radius: 999px; background: #eef3f1; color: #5f716b; font-size: 11px; font-weight: 700; }
+.site-map-offline { display: flex; align-items: center; gap: 11px; min-height: 96px; padding: 14px; border: 1px solid #dce8e3; border-radius: 9px; background: #f3f8f6; }
+.site-map-offline-icon { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border-radius: 10px; background: #e2f4ec; color: #087b61; }
+.site-map-offline-icon svg { width: 20px; height: 20px; }
+.site-map-offline > div { display: grid; gap: 4px; min-width: 0; }
+.site-map-offline strong { color: #25433a; font-size: 12px; }
+.site-map-offline > div > span { color: var(--muted); font-size: 11px; line-height: 1.4; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.site-location-unavailable { display: flex; align-items: center; gap: 10px; margin: 14px 0; padding: 12px; border: 1px solid var(--line-2); border-radius: 10px; background: #f7faf8; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.site-map-frame .leaflet-control-attribution { font-size: 9px; }
+.site-map-frame .leaflet-control-zoom a { color: #087b61; }
+
 @media (min-width: 901px) {
   html, body { height: 100%; overflow: hidden; }
   .app-shell { height: 100vh; min-height: 100vh; overflow: hidden; }
@@ -336,6 +362,10 @@ body.user-editor-open { overflow: hidden; }
   .site-id-badge, .fuel-date-badge { min-height: 29px; padding: 6px 9px; font-size: 11px; }
   .contact-grid-three, .contact-grid-two { grid-template-columns: minmax(0, 1fr); }
   .site-additional-notes { padding-inline: 0; }
+  .site-location-card { margin: 12px 0; padding: 10px; gap: 9px; }
+  .site-map-canvas, .site-map-loading { height: clamp(190px, 54vw, 230px); }
+  .site-location-heading { align-items: flex-start; }
+  .site-directions-link { min-height: 40px; padding-inline: 10px; font-size: 11px; }
   .contact-detail-grid .detail-row.info-row { padding-inline: 0; }
   .contact-detail-grid .detail-row.info-row:not(:last-child) { border-right: 0; border-bottom: 1px solid var(--line-2); }
   .crew-detail-grid { grid-template-columns: minmax(0, 1fr); }

@@ -11,6 +11,7 @@
     "db:baseline": "supabase migration repair --status applied 20261114000000 --remote",
     "db:push": "supabase db push --remote",
     "import:master": "node scripts/import-master-workbook.mjs",
+    "import:locations": "node scripts/import-kml-locations.mjs",
     "import:daily": "node scripts/import-daily-workbook.mjs"
   },
   "dependencies": {
@@ -18,12 +19,14 @@
     "@supabase/supabase-js": "^2.119.0",
     "@vercel/analytics": "^2.0.1",
     "exceljs": "^4.4.0",
+    "leaflet": "^1.9.4",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
