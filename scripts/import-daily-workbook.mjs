@@ -111,8 +111,9 @@ for (const [siteId, records] of historyBySite) {
   let runningHours = null;
   let average = null;
   let averageStatus = "n_a";
-  let baselineValid = latest.dg_meter_status === "working" && latest.current_reading !== null;
-  if (latest.dg_meter_status === "working" && latest.previous_reading !== null && latest.current_reading !== null) {
+  const isMeterUsable = latest.dg_meter_status !== "faulty" && latest.dg_meter_status !== "missing";
+  let baselineValid = isMeterUsable && latest.current_reading !== null;
+  if (isMeterUsable && latest.previous_reading !== null && latest.current_reading !== null) {
     const difference = latest.current_reading - latest.previous_reading;
     const elapsedHours = previous ? Math.max(0, (Date.parse(latest.fueling_date) - Date.parse(previous.fueling_date)) / 3600000) : 0;
     if (difference < 0 || (elapsedHours > 0 && difference > elapsedHours) || (consumed !== null && consumed < 0)) {
@@ -120,12 +121,12 @@ for (const [siteId, records] of historyBySite) {
       baselineValid = false;
     } else {
       runningHours = difference;
-      if (difference > 0 && consumed !== null) {
+      if (difference > 0 && consumed !== null && consumed >= 0) {
         average = consumed / difference;
         averageStatus = "valid";
       } else if (!previous) averageStatus = "baseline";
     }
-  } else if (latest.dg_meter_status === "working" && latest.current_reading !== null && !previous) {
+  } else if (isMeterUsable && latest.current_reading !== null && !previous) {
     averageStatus = "baseline";
   }
   latestRecords.push({

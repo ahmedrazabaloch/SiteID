@@ -176,6 +176,25 @@ function DashboardContent({ profile }: { profile: Profile }) {
   }
   const dayVehicle = assignedVehicle("day");
   const nightVehicle = assignedVehicle("night");
+  const currentReading = current.current_reading !== null && current.current_reading !== undefined && current.current_reading !== "" ? Number(current.current_reading) : null;
+  const previousReading = current.previous_reading !== null && current.previous_reading !== undefined && current.previous_reading !== "" ? Number(current.previous_reading) : null;
+  const isMeterUnusable = current.dg_meter_status === "faulty" || current.dg_meter_status === "missing";
+  const readingsValid = !isMeterUnusable && currentReading !== null && previousReading !== null && Number.isFinite(currentReading) && Number.isFinite(previousReading) && currentReading >= previousReading;
+  const calculatedHours = readingsValid ? currentReading - previousReading : null;
+  const displayRunningHours = current.running_hours !== null && current.running_hours !== undefined && current.running_hours !== ""
+    ? current.running_hours
+    : calculatedHours;
+  const consumedFuel = current.fuel_consumed_since_last !== null && current.fuel_consumed_since_last !== undefined && current.fuel_consumed_since_last !== ""
+    ? Number(current.fuel_consumed_since_last)
+    : (current.previous_total_fuel !== null && current.previous_total_fuel !== undefined && current.available_fuel !== null && current.available_fuel !== undefined
+      ? Number(current.previous_total_fuel) - Number(current.available_fuel)
+      : null);
+  const calculatedAverage = displayRunningHours !== null && Number(displayRunningHours) > 0 && consumedFuel !== null && Number.isFinite(consumedFuel) && consumedFuel >= 0
+    ? consumedFuel / Number(displayRunningHours)
+    : null;
+  const displayAverageConsumption = current.average_consumption !== null && current.average_consumption !== undefined && current.average_consumption !== ""
+    ? current.average_consumption
+    : calculatedAverage;
   const message = result
     ? [
         `Fuel Request — Site ${String(site.site_id ?? siteId)}`,
@@ -278,8 +297,8 @@ function DashboardContent({ profile }: { profile: Profile }) {
                       <Value label="DG meter status" value={meterLabel(current.dg_meter_status)} />
                       <Value label="Previous reading" value={formatReading(current.previous_reading)} />
                       <Value label="Current reading" value={formatReading(current.current_reading)} />
-                      <Value label="Running hours" value={formatValue(current.running_hours, " h")} />
-                      <Value label="Average consumption" value={formatValue(current.average_consumption, " L/h")} highlight />
+                      <Value label="Running hours" value={formatValue(displayRunningHours, " h")} />
+                      <Value label="Average consumption" value={formatValue(displayAverageConsumption, " L/h")} highlight />
                     </div></section>
                   </div>
                   <div className="message-section card forward-card"><div className="message-head forward-head"><div><h3 className="section-title forward-title"><AppIcon name="message" />Prepare fuel request</h3><p className="muted forward-sub">Review, copy and paste this request into WhatsApp manually.</p></div></div>
